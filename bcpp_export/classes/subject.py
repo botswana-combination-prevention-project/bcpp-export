@@ -1,14 +1,15 @@
 import re
 
-from edc.constants import NOT_APPLICABLE, POS
+from edc_constants.constants import NOT_APPLICABLE, POS
 
-from apps.bcpp_clinic.models import ClinicConsent, Questionnaire, ClinicVlResult
-from apps.bcpp_household_member.constants import CLINIC_RBD
-from apps.bcpp_household.models import Plot
-from apps.bcpp_lab.models.subject_requisition import SubjectRequisition
-from apps.bcpp_subject.models import (SubjectConsent, SubjectReferral, HivTestingHistory,
-                                      HivCareAdherence, Pregnancy, HivUntested, HivTestReview,
-                                      HivTested, SubjectLocator, Pima)
+from bhp066.apps.bcpp_clinic.models import ClinicConsent, Questionnaire, ClinicVlResult
+from bhp066.apps.bcpp_household_member.constants import CLINIC_RBD
+from bhp066.apps.bcpp_household.models import Plot
+from bhp066.apps.bcpp_lab.models.subject_requisition import SubjectRequisition
+from bhp066.apps.bcpp_subject.models import (
+    SubjectConsent, SubjectReferral, HivTestingHistory,
+    HivCareAdherence, Pregnancy, HivUntested, HivTestReview,
+    HivTested, SubjectLocator, Pima)
 
 from .base import Base
 from .member import Member
@@ -280,7 +281,7 @@ class Subject(Base, SubjectDataFixMixin):
                 lookup_model=model_cls,
                 lookup_string='subject_visit__household_member',
                 lookup_instance=self.member.household_member.membership.by_survey.get(survey_abbrev)
-                )
+            )
             try:
                 setattr(self, '{}_{}'.format('cd4_not_tested_reason', survey_abbrev),
                         pima.pima_today_other if not pima.pima_today_other.upper() == 'OTHER' else pima.pima_today_other_other)

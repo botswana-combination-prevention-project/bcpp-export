@@ -1,5 +1,5 @@
-from apps.bcpp_clinic.models import ClinicConsent
-from apps.bcpp_subject.models import SubjectConsent
+from bhp066.apps.bcpp_clinic.models import ClinicConsent
+from bhp066.apps.bcpp_subject.models import SubjectConsent
 
 from ..classes import Subject
 
@@ -11,7 +11,7 @@ class Subjects(BaseCollector):
     """Exports helper.household instances to CSV.
 
     For example::
-        from apps.bcpp_export.collectors import Subjects
+        from bhp066.apps.bcpp_export.collectors import Subjects
 
         subjects = Subjects()
         #export everything (all consents, all communities)

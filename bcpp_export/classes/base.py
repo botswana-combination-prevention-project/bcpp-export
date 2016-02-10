@@ -3,7 +3,7 @@ from copy import copy
 from datetime import datetime
 from uuid import uuid4
 
-from edc.base.model.fields.helpers import site_revision
+from django_revision import site_revision
 from edc.map.classes import site_mappers
 
 from ..mixins import DenormalizeMixin, FormatForExportMixin, ConsoleMixin
@@ -47,7 +47,7 @@ class Base(DenormalizeMixin, FormatForExportMixin, ConsoleMixin):
 
     @property
     def export_revision(self):
-        return str(site_revision)
+        return site_revision.tag
 
     @property
     def csv_keys(self):

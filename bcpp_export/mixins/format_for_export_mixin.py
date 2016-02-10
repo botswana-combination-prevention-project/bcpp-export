@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from edc.constants import YES, NO
+from edc_constants.constants import YES, NO
 
 
 class FormatForExportMixin(object):

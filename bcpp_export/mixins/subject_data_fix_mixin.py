@@ -1,9 +1,10 @@
 from collections import namedtuple
 
-from edc.constants import YES, NO
+from edc_constants.constants import YES, NO
 
-from apps.bcpp_household_member.constants import BHS, CLINIC_RBD, ANNUAL
-from apps.bcpp_household_member.classes import HouseholdMemberHelper
+from bhp066.apps.bcpp_household_member.constants import BHS, CLINIC_RBD, ANNUAL
+from bhp066.apps.bcpp_household_member.classes import HouseholdMemberHelper
+from bhp066.apps.bcpp_clinic.models import ClinicEligibility
 
 from .console_mixin import ConsoleMixin
 
@@ -19,7 +20,6 @@ class SubjectDataFixMixin(ConsoleMixin):
 
     def fix_clinic_citizen(self, household_member):
         """Gets citizen from Eligibility until Consent is fixed (Bug #1094)."""
-        from apps.bcpp_clinic.models import ClinicEligibility
         if not self.citizen:
             try:
                 clinic_eligibility = ClinicEligibility.objects.get(
@@ -55,7 +55,7 @@ class SubjectDataFixMixin(ConsoleMixin):
                         self.output_to_console(
                             'Warning! Member status does not match '
                             'for {}. Expected BHS. Got {}.\n'.format(subject_consent, expected_member_status)
-                            )
+                        )
                     if getattr(self, 'member_status_{}'.format(survey_abbrev)) not in [BHS, ANNUAL]:
                         namedtpl = NamedTpl(member_status=BHS)
                         self.denormalize(survey_abbrev, fieldattrs, namedtpl)

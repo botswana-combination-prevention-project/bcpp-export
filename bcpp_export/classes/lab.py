@@ -5,16 +5,13 @@ from dateutil.parser import parse
 from dateutil.relativedelta import relativedelta
 
 from django.conf import settings
-from django.core.exceptions import MultipleObjectsReturned
 
-from edc.constants import YES, NO
+from edc_constants.constants import YES
 
-from apps.bcpp_lab.models import SubjectRequisition, Receive, Aliquot as AliquotModel
-from apps.bcpp_subject.models import SubjectConsent
+from bhp066.apps.bcpp_lab.models import SubjectRequisition, Receive
 
 from .base import Base
 from .subject import Subject
-from .survey import Survey
 from .specimen import Specimen
 ReceivedTuple = namedtuple(
     'ReceivedTuple',
@@ -34,10 +31,6 @@ class Lab(Base):
             self.aliquot_identifiers = [a.aliquot_identifier for a in aliquots]
         except AttributeError:
             self.aliquot_identifiers = aliquots
-        #self.aliquot_datetime = aliquot.aliquot_datetime
-#        self.aliquot_condition = aliquot.aliquot_condition
-#        self.aliquot_type = aliquot.aliquot_type.alpha_code
-#        self.aliquot_type_name = aliquot.aliquot_type.name
         self.dmis_column = 'edc_specimen_identifier'
         self.subject_requisition = SubjectRequisition.objects.get(specimen_identifier=self.aliquot_identifiers[0][:-4])
         self.specimen_identifier = self.subject_requisition.specimen_identifier
@@ -79,7 +72,7 @@ class Lab(Base):
             relativedelta(self.receive_datetime, self.drawn_datetime).days,
             relativedelta(self.lis_received_datetime, self.receive_datetime).days,
             relativedelta(self.lis_assay_date, self.lis_received_datetime).days,
-            )
+        )
 
     def __repr__(self):
         return '{0}({1.specimen_identifier!r})'.format(self.__class__.__name__, self)
@@ -95,7 +88,7 @@ class Lab(Base):
                     'select pid, pat_id, headerdate from lab01response as l where '
                     '{dmis_column} LIKE \'{specimen_identifier}%\'').format(
                         dmis_column=self.dmis_column, specimen_identifier=self.specimen_identifier)
-                )
+            )
             return cursor.execute(self.sql.get('received_items')).fetchall()
         if self.verbose:
             print "Querying dmis for {} {}".format(self.specimen_identifier, self.aliquot_type)
@@ -121,32 +114,6 @@ class Lab(Base):
 
         except pyodbc.Error as e:
             raise pyodbc.Error(e)
-
-#     def fetch_validation(self):
-#         """Fetches the receiving data from the LIS for each identifier."""
-#         def fetchall():
-#             self.sql.update(
-#                 received_items=(
-#                     'select pid, pat_id, headerdate from lab01response as l where '
-#                     '{dmis_column} LIKE \'{specimen_identifier}%\'').format(
-#                         dmis_column=self.dmis_column, specimen_identifier=self.specimen_identifier)
-#                 )
-#             return self.cursor.execute(self.sql.get('received_items')).fetchall()
-# 
-#         if self.verbose:
-#             print "Querying dmis for {}".format(self.specimen_identifier)
-#         try:
-#             self.lis_specimen_identifier = []
-#             self.lis_patient_ref = []
-#             self.lis_received_datetime = []
-#             with pyodbc.connect(settings.LAB_IMPORT_DMIS_DATA_SOURCE) as cnxn:
-#                 with cnxn.cursor() as self.cursor:
-#                     for lis_specimen_identifier, lis_patient_ref, received_datetime in fetchall():
-#                         self.lis_specimen_identifier.append(lis_specimen_identifier)
-#                         self.lis_patient_ref.append(lis_patient_ref)
-#                         self.lis_received_datetime.append(received_datetime)
-#         except pyodbc.Error as e:
-#             raise pyodbc.Error(e)
 
     def fetch_result(self):
         """Fetches the receiving data from the LIS for each identifier."""
@@ -200,35 +167,3 @@ class Lab(Base):
 
         except pyodbc.Error as e:
             raise pyodbc.Error(e)
-
-
-#     def fetch_storage(self):
-#         """Fetches the receiving data from the LIS for each identifier."""
-#         def fetchall():
-#             self.sql.update(
-#                 received_items=(
-#                     'select pid, pat_id, headerdate from lab01response as l where '
-#                     '{dmis_column} LIKE \'{specimen_identifier}%\'').format(
-#                         dmis_column=self.dmis_column, specimen_identifier=self.specimen_identifier)
-#                 )
-#             return self.cursor.execute(self.sql.get('received_items')).fetchall()
-# 
-#         if self.verbose:
-#             print "Querying dmis for {}".format(self.specimen_identifier)
-#         try:
-#             self.lis_specimen_identifier = []
-#             self.lis_patient_ref = []
-#             self.lis_received_datetime = []
-#             with pyodbc.connect(settings.LAB_IMPORT_DMIS_DATA_SOURCE) as cnxn:
-#                 with cnxn.cursor() as self.cursor:
-#                     for lis_specimen_identifier, lis_patient_ref, received_datetime in fetchall():
-#                         self.lis_specimen_identifier.append(lis_specimen_identifier)
-#                         self.lis_patient_ref.append(lis_patient_ref)
-#                         self.lis_received_datetime.append(received_datetime)
-#         except pyodbc.Error as e:
-#             raise pyodbc.Error(e)
-# 
-# #         for identifier in self.results.get('received_items'):
-# #             if identifier not in self.identifiers:
-# #                 self.results.get('received_items').update({identifier: []})
-#         return self.results.get('received_items')

@@ -1,6 +1,6 @@
-from edc.constants import NO
+from edc_constants.constants import NO
 
-from apps.bcpp_household_member.models import SubjectHtc
+from bhp066.apps.bcpp_household_member.models import SubjectHtc
 
 from .base import Base
 from .member import Member
@@ -55,7 +55,7 @@ class Htc(Base):
             ('tracking_identifier', 'tracking_identifier'),
             ('referred', 'referred'),
             ('referral_clinic', 'referral_clinic'),
-            ]
+        ]
         for survey_abbrev in self.survey.survey_abbrevs:
             attr_suffix = survey_abbrev
             subject_htc = self.denormalize(
@@ -89,6 +89,6 @@ class Htc(Base):
             ('plot_identifier', 'plot_identifier'),
             ('registered_subject', 'registered_subject'),
             ('study_resident', 'study_resident'),
-            ]
+        ]
         for attr in attrs:
             setattr(self, attr[1], getattr(self.member, attr[0]))

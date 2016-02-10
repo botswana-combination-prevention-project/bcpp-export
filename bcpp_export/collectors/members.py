@@ -1,4 +1,4 @@
-from apps.bcpp_household_member.models import HouseholdMember
+from bhp066.apps.bcpp_household_member.models import HouseholdMember
 
 from ..classes import Member
 
@@ -10,7 +10,7 @@ class Members(BaseCollector):
     """Exports helper.household instances to CSV.
 
     For example::
-        from apps.bcpp_export.collectors import Members
+        from bhp066.apps.bcpp_export.collectors import Members
 
         members = Members()
         members.export_by_community()

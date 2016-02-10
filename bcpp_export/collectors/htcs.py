@@ -1,4 +1,4 @@
-from apps.bcpp_household_member.models import SubjectHtc
+from bhp066.apps.bcpp_household_member.models import SubjectHtc
 
 from ..classes import Htc
 
@@ -10,7 +10,7 @@ class Htcs(BaseCollector):
     """Exports helper.household instances to CSV.
 
     For example::
-        from apps.bcpp_export.collectors import Htcs
+        from bhp066.apps.bcpp_export.collectors import Members
 
         htcs = Htcs(isoformat=True, floor_datetime=True)
         htcs.export_by_community()

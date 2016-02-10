@@ -9,7 +9,7 @@ class Communities(BaseCollector):
     """Exports helper.community instances to CSV.
 
     For example::
-        from apps.bcpp_export.collectors import Communities
+        from bhp066.apps.bcpp_export.collectors import Communities
 
         communities = Communities()
         communities.export_to_csv()
@@ -26,4 +26,4 @@ class Communities(BaseCollector):
             if mapper.pair > 0:
                 community = Community(mapper)
                 print str(community)
-                self.export(community)
+                self._export(community)

@@ -1,7 +1,7 @@
 from edc.map.classes import site_mappers
 
-from apps.bcpp_household.models import Plot
-from apps.bcpp_survey.models import Survey as SurveyModel
+from bhp066.apps.bcpp_household.models import Plot
+from bhp066.apps.bcpp_survey.models import Survey as SurveyModel
 
 from .base import Base
 
@@ -39,11 +39,11 @@ class Survey(Base):
                 'start_date': dates.start_date if dates else None,
                 'full_enrollment_date': dates.full_enrollment_date if dates else None,
                 'smc_start_date': dates.smc_start_date if dates else None,
-                }
+            }
             self.denormalize(
                 self.survey_abbrevs[index], fieldattrs,
                 instance=type('Instance', (object, ), attrs)
-                )
+            )
 
     def __repr__(self):
         return '{0}({1.community!r})'.format(self.__class__.__name__, self)

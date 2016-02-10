@@ -1,11 +1,10 @@
+from django.core.exceptions import MultipleObjectsReturned
 from edc.subject.registration.models import RegisteredSubject
-
-from apps.bcpp_household_member.models import HouseholdMember as HouseholdMemberModel
-from apps.bcpp_export.classes.survey import Survey
+from bhp066.apps.bcpp_household_member.models import HouseholdMember as HouseholdMemberModel
+from bhp066.apps.bcpp_export.classes.survey import Survey
 
 from .base import Base
 from .membership import Membership
-from django.core.exceptions import MultipleObjectsReturned
 
 
 class HouseholdMember(Base):

@@ -6,9 +6,9 @@ from dateutil.parser import parse
 from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned
 
-from edc.constants import YES
+from edc_constants.constants import YES
 
-from apps.bcpp_lab.models import Receive, Aliquot as AliquotModel
+from bhp066.apps.bcpp_lab.models import Receive, Aliquot as AliquotModel
 
 from .base import Base
 
@@ -76,7 +76,7 @@ class Specimen(Base):
                     'select edc_specimen_identifier, pid, pat_id, headerdate from lab01response as l where '
                     'edc_specimen_identifier LIKE \'{specimen_identifier}%\'').format(
                         specimen_identifier=self.specimen_identifier)
-                )
+            )
             return cursor.execute(self.sql.get('received_items')).fetchall()
         if self.verbose:
             print "Querying dmis for {} {}".format(self.specimen_identifier, self.aliquot_type)
@@ -95,7 +95,7 @@ class Specimen(Base):
                                     lis_specimen_identifier,
                                     lis_subject_identifier,
                                     lis_received_datetime)
-                                })
+                            })
             self.lis_results = {edc_specimen_identifier: [] for edc_specimen_identifier in self.lis_receive}
         except pyodbc.Error as e:
             print(e)

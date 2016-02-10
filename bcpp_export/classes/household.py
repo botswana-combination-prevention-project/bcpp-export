@@ -1,9 +1,10 @@
-from apps.bcpp_household.models import (HouseholdStructure, HouseholdLogEntry, HouseholdRefusal,
-                                        HouseholdAssessment, Household as HouseholdModel)
-from apps.bcpp_household.choices import HH_STATUS
-from apps.bcpp_household.constants import (NEARLY_ALWAYS_OCCUPIED, SEASONALLY_NEARLY_ALWAYS_OCCUPIED,
-                                           UNKNOWN_OCCUPIED, RARELY_NEVER_OCCUPIED, NEVER_OCCUPIED,
-                                           RARELY_OCCUPIED, SEASONALLY_OCCUPIED)
+from bhp066.apps.bcpp_household.models import (
+    HouseholdStructure, HouseholdLogEntry, HouseholdRefusal,
+    HouseholdAssessment, Household as HouseholdModel)
+from bhp066.apps.bcpp_household.choices import HH_STATUS
+from bhp066.apps.bcpp_household.constants import (
+    SEASONALLY_NEARLY_ALWAYS_OCCUPIED,
+    UNKNOWN_OCCUPIED, RARELY_NEVER_OCCUPIED)
 
 from .base import Base
 from .plot import Plot
@@ -57,8 +58,7 @@ class Household(Base):
             ('confirmed_date', 'confirmed_date'),
             ('plot_identifier', 'plot_identifier'),
             ('status', 'plot_status'),
-            ('log_status', 'plot_log_status'),
-            ]
+            ('log_status', 'plot_log_status')]
         for attr in attrs:
             setattr(self, attr[1], getattr(self.plot, attr[0]))
 
@@ -78,16 +78,14 @@ class Household(Base):
                 if refused:
                     status = hh_status['not_enum_hh_refused']
                 elif last_seen:
-                    if last_seen in [SEASONALLY_NEARLY_ALWAYS_OCCUPIED, NEARLY_ALWAYS_OCCUPIED, SEASONALLY_OCCUPIED]:
-                        # status = hh_status['not_enum_almost_always_there_or_seasonally_occupied']
-                        status = 'not_enum_almost_always_there_or_seasonally_occupied'
-                    elif last_seen == [RARELY_NEVER_OCCUPIED, NEVER_OCCUPIED, RARELY_OCCUPIED]:
-                        # status = hh_status['not_enum_rarely_there_or_never_there']
-                        status = 'not_enum_rarely_there_or_never_there'
+                    if last_seen == SEASONALLY_NEARLY_ALWAYS_OCCUPIED:
+                        status = hh_status['not_enum_almost_always_there_or_seasonally_occupied']
+                    elif last_seen == RARELY_NEVER_OCCUPIED:
+                        status = hh_status['not_enum_rarely_there_or_never_there']
                     elif last_seen == UNKNOWN_OCCUPIED:
                         status = hh_status['not_enum_unknown_status']
                     else:
-                        status = 'cannot_determine'
+                        raise TypeError('cannot determine HH_STATUS')
             else:
                 status = hh_status['not_enum_hh'] if self.household else None
             # if not status and self.household:
@@ -116,8 +114,7 @@ class Household(Base):
                 ('enumeration_attempts', 'enumeration_attempts'),
                 ('eligible_members', 'eligible_members'),
                 ('refused_enumeration', 'refused_enumeration'),
-                ('failed_enumeration', 'failed_enumeration'),
-                ]
+                ('failed_enumeration', 'failed_enumeration')]
             self.denormalize(
                 attr_suffix, fieldattrs,
                 instance=self.household_structures.get(survey_abbrev))
@@ -174,11 +171,10 @@ class Household(Base):
             attr_suffix = survey_abbrev
             fieldattrs = [
                 ('created', 'assessment_datetime'),
-                ('eligibles_last_seen_home', 'assessment_last_seen'),
-                # ('member_count', 'assessment_count'),
-                ('potential_eligibles', 'assessment_eligible'),
-                # ('ineligible_reason', 'assessment_ineligible_reason'),
-            ]
+                ('last_seen_home', 'assessment_last_seen'),
+                ('member_count', 'assessment_count'),
+                ('eligibles', 'assessment_eligible'),
+                ('ineligible_reason', 'assessment_ineligible_reason')]
             self.denormalize(
                 attr_suffix, fieldattrs,
                 lookup_model=HouseholdAssessment,

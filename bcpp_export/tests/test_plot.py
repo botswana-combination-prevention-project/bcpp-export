@@ -1,15 +1,12 @@
 from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
 
-from edc.constants import NOT_APPLICABLE, YES, NO
+from edc_constants.constants import NO
 
-from apps.bcpp_export.classes import Subject, Plot as PlotCls
-from apps.bcpp_household_member.models import HouseholdMember
-from apps.bcpp_household_member.tests import BaseTestMember
-from apps.bcpp_household_member.tests.factories import HouseholdMemberFactory, EnrollmentChecklistFactory
-from apps.bcpp_household_member.tests.factories import SubjectHtcFactory
-from apps.bcpp_subject.tests.factories import SubjectConsentFactory
-from apps.bcpp_household.tests.factories.plot_factory import PlotFactory
+from bhp066.apps.bcpp_export.classes import Plot as PlotCls
+from bhp066.apps.bcpp_household_member.tests import BaseTestMember
+from bhp066.apps.bcpp_household_member.tests.factories import EnrollmentChecklistFactory
+from bhp066.apps.bcpp_household.tests.factories.plot_factory import PlotFactory
 
 
 class TestPlot(BaseTestMember):

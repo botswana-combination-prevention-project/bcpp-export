@@ -1,9 +1,9 @@
-from apps.bcpp_household.models import Household, HouseholdStructure, PlotLog, PlotLogEntry, Plot as PlotModel
-from apps.bcpp_household_member.models import HouseholdMember
-from apps.bcpp_household.constants import TWENTY_PERCENT, FIVE_PERCENT, CONFIRMED, SEVENTY_FIVE_PERCENT,\
+from bhp066.apps.bcpp_household.models import Household, HouseholdStructure, PlotLog, PlotLogEntry, Plot as PlotModel
+from bhp066.apps.bcpp_household_member.models import HouseholdMember
+from bhp066.apps.bcpp_household.constants import TWENTY_PERCENT, FIVE_PERCENT, CONFIRMED, SEVENTY_FIVE_PERCENT,\
     RESIDENTIAL_NOT_HABITABLE, RESIDENTIAL_HABITABLE, NON_RESIDENTIAL, ACCESSIBLE
-from apps.bcpp_household.choices import PLOT_STATUS, PLOT_LOG_STATUS
-from apps.bcpp_subject.models import SubjectConsent
+from bhp066.apps.bcpp_household.choices import PLOT_STATUS, PLOT_LOG_STATUS
+from bhp066.apps.bcpp_subject.models import SubjectConsent
 
 from .base import Base
 from .survey import Survey

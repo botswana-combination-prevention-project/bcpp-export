@@ -1,15 +1,16 @@
 from copy import copy
 from datetime import date
 
-from apps.bcpp_household.choices import HOUSEHOLD_LOG_STATUS
-from apps.bcpp_household.constants import ELIGIBLE_REPRESENTATIVE_PRESENT
-from apps.bcpp_household.models import Plot
-from apps.bcpp_household_member.classes import HouseholdMemberHelper
-from apps.bcpp_household_member.constants import (BHS, UNDECIDED, ANNUAL, ABSENT, REFUSED,
-                                                  HTC, NOT_ELIGIBLE, REFUSED_HTC)
-from apps.bcpp_household_member.models import SubjectRefusal, SubjectAbsenteeEntry
-from apps.bcpp_subject.models.subject_consent import SubjectConsent
-from apps.bcpp_survey.models import Survey as SurveyModel
+from bhp066.apps.bcpp_household.choices import HOUSEHOLD_LOG_STATUS
+from bhp066.apps.bcpp_household.constants import ELIGIBLE_REPRESENTATIVE_PRESENT
+from bhp066.apps.bcpp_household.models import Plot
+from bhp066.apps.bcpp_household_member.classes import HouseholdMemberHelper
+from bhp066.apps.bcpp_household_member.constants import (
+    BHS, UNDECIDED, ANNUAL, ABSENT, REFUSED,
+    HTC, NOT_ELIGIBLE, REFUSED_HTC)
+from bhp066.apps.bcpp_household_member.models import SubjectRefusal, SubjectAbsenteeEntry
+from bhp066.apps.bcpp_subject.models.subject_consent import SubjectConsent
+from bhp066.apps.bcpp_survey.models import Survey as SurveyModel
 
 from .base import Base
 from .household_member import HouseholdMember
@@ -18,7 +19,7 @@ from .household_member import HouseholdMember
 class Member(Base):
     """
     For example::
-        from apps.bcpp_export.helpers import Subject, Plot as PlotCls, Member
+        from bhp066.apps.bcpp_export.helpers import Subject, Plot as PlotCls, Member
         data_errors = []
         members = []
         for household_member in HouseholdMember.objects.filter(
@@ -110,7 +111,7 @@ class Member(Base):
             ('eligible_subject', 'eligible_subject'),
             ('enrollment_checklist_completed', 'enrollment_checklist_completed'),
             ('enrollment_loss_completed', 'enrollment_loss_completed'),
-            ]
+        ]
         for survey_abbrev in self.survey.survey_abbrevs:
             attr_suffix = survey_abbrev
             self.denormalize(
@@ -162,7 +163,7 @@ class Member(Base):
                 lookup_model=SubjectRefusal,
                 lookup_string='household_member',
                 lookup_instance=self.household_member.membership.by_survey.get(survey_abbrev)
-                )
+            )
             self.denormalize_other(
                 attr_suffix, fieldattrs_other,
                 instance=subject_refusal)
@@ -178,7 +179,7 @@ class Member(Base):
                 lookup_model=SubjectAbsenteeEntry,
                 lookup_string='subject_absentee__household_member',
                 lookup_instance=self.household_member.membership.by_survey.get(attr_suffix)
-                )
+            )
             self.denormalize_other(
                 attr_suffix, fieldattrs_other,
                 instance=subject_absentee_entry)
@@ -192,7 +193,7 @@ class Member(Base):
         # 1. test if only uses current HOUSEHOLD_LOG_STATUS options
         condition = list(set(
             [item for item in self.household_log_status if item not in [tpl[0] for tpl in HOUSEHOLD_LOG_STATUS]]
-            ))
+        ))
         if condition:
             data_errors['household_status'].append(
                 'Invalid household status options in {}. Got {}'.format(self.community, condition))
@@ -229,84 +230,3 @@ class Member(Base):
             if not v:
                 del self._data_errors[k]
         return self._data_errors
-
-#     def update_htc(self):
-#         attrs_to_denormalize = [
-#             ('offered', 'htc_offered'),
-#             ('accepted', 'htc_accepted'),
-#             ('date', 'htc_date'),
-#             ('refusal_reason', 'htc_refusal_reason'),
-#             ('referred', 'htc_referred'),
-#             ('referral_clinic', 'htc_referral_clinic'),
-#             ('tracking_identifier', 'htc_tracking_identifier')]
-#         for survey_abbrev in self.survey.survey_abbrevs:
-#             attr_suffix = survey_abbrev
-#             htc = Htc(self.household_member.membership.by_survey.get(attr_suffix))
-#             self.denormalize(
-#                 attr_suffix, attrs_to_denormalize,
-#                 instance=htc)
-# 
-#     def update_htc_status(self):
-#         """Sets a htc status attr according to HSPH logic."""
-#         for attr_suffix in self.survey.survey_abbrevs:
-#             status = None
-#             offered = getattr(self, '{}_{}'.format('htc_offered', attr_suffix))
-#             accepted = getattr(self, '{}_{}'.format('htc_accepted', attr_suffix))
-#             refused = getattr(self, '{}_{}'.format('htc_refusal_reason', attr_suffix))
-#             if offered and not accepted:
-#                 status = 'offered'
-#             elif offered and accepted:
-#                 status = 'accepted'
-#             elif offered and refused:
-#                 status = 'refused'
-#             else:
-#                 status = None
-#         setattr(self, 'htc_status', status)
-#
-#     def update_hm_status(self):
-#         """Sets member status as defined by HSPH.
-# 
-#         Note: does not consider refused? is None when BHS,
-#         if refused, will set to failed checklist even if checklist was not complete
-#             .
-# 
-#         data status_2;
-#         merge hh_members (keep=registered_subject_id  eligible_member eligible_subject member_status)
-#             undecided (in=a keep=registered_subject_id)
-#             refusal (in=b keep=registered_subject_id)
-#             absentee (in=c keep=registered_subject_id)
-#             consent (in=d keep=registered_subject_id subject_identifier);
-#         by registered_subject_id; format status $30.;
-# 
-#         if eligible_member == '0':
-#             status='age_residency_ineligible'
-#         if eligible_member == '1' and c and  not b and not a and eligible_subject <>'1':
-#             status='absent'
-#         if eligible_member == '1' and eligible_subject == '0':
-#                 status='failed_checklist';"""
-# 
-#         options = {
-#             'age_residency_ineligible': [NOT_ELIGIBLE, HTC, REFUSED_HTC],
-#             'absent': [ABSENT],
-#             'failed_checklist': [NOT_ELIGIBLE, HTC, REFUSED_HTC, REFUSED]
-#             }
-#         for survey_abbrev in self.survey.survey_abbrevs:
-#             status = None
-#             eligible_member = getattr(self, '{}_{}'.format('eligible_member', survey_abbrev))
-#             eligible_subject = getattr(self, '{}_{}'.format('eligible_subject', survey_abbrev))
-#             absent = getattr(self, '{}_{}'.format('absent', survey_abbrev))
-#             if not eligible_member:
-#                 status = 'age_residency_ineligible'
-#             elif eligible_member:
-#                 if not eligible_subject and absent:
-#                     status = 'absent'
-#                 elif not eligible_subject:
-#                     status = 'failed_checklist'
-#             # only set attr if survey was conducted
-#             setattr(self, '{}_{}'.format('hm_status', survey_abbrev), status if survey_abbrev in self.surveys_enumerated else None)
-#             # get for this survey
-#             member_status = getattr(self, '{}_{}'.format('member_status', survey_abbrev))
-#             # warn if not equal and survey was conducted
-#             if (survey_abbrev in self.surveys_enumerated) and (member_status not in options.get(status) if status else []) and self.verbose:
-#                 print 'Warning! member_status <> hm_status. Got {} {}'.format(member_status, status)
-

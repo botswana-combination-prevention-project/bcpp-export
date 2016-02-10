@@ -3,8 +3,8 @@ import os
 
 from datetime import datetime
 
-from apps.bcpp_clinic.models import ClinicConsent
-from apps.bcpp_subject.models import SubjectConsent, HicEnrollment
+from bhp066.apps.bcpp_clinic.models import ClinicConsent
+from bhp066.apps.bcpp_subject.models import SubjectConsent, HicEnrollment
 
 from .base_collector import BaseCollector
 

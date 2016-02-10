@@ -1,15 +1,14 @@
 from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
 
-from edc.constants import NOT_APPLICABLE, YES, NO
+from edc_constants.constants import NOT_APPLICABLE, YES, NO
 
-from apps.bcpp_export.classes import Subject
-from apps.bcpp_household_member.models import HouseholdMember
-from apps.bcpp_household_member.tests import BaseTestMember
-from apps.bcpp_household_member.tests.factories import HouseholdMemberFactory, EnrollmentChecklistFactory
-from apps.bcpp_household_member.tests.factories import SubjectHtcFactory
-from apps.bcpp_subject.tests.factories import SubjectConsentFactory
-#from apps.bcpp_household_member.constants import BHS_ELIGIBLE
+from bhp066.apps.bcpp_export.classes import Subject
+from bhp066.apps.bcpp_household_member.models import HouseholdMember
+from bhp066.apps.bcpp_household_member.tests import BaseTestMember
+from bhp066.apps.bcpp_household_member.tests.factories import HouseholdMemberFactory, EnrollmentChecklistFactory
+from bhp066.apps.bcpp_household_member.tests.factories import SubjectHtcFactory
+from bhp066.apps.bcpp_subject.tests.factories import SubjectConsentFactory
 
 
 class TestSubject(BaseTestMember):

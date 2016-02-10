@@ -1,5 +1,4 @@
-from edc.export.helpers import ExportObjectHelper
-from apps.bcpp_household.models import Household as HouseholdModel
+from bhp066.apps.bcpp_household.models import Household as HouseholdModel
 
 from ..classes import Household
 
@@ -11,10 +10,10 @@ class Households(BaseCollector):
     """Exports helper.household instances to CSV.
 
     For example::
-        from apps.bcpp_export.collectors import Households
+        from bhp066.apps.bcpp_export.collectors import Households
 
         households = Households()
-        households.export_by_community(filename_prefix='AD')
+        households.export_to_csv()
     """
 
     def __init__(self, export_plan=None, community=None, exception_cls=None, **kwargs):

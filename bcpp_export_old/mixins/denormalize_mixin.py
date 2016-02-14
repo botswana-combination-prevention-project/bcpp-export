@@ -84,6 +84,6 @@ class DenormalizeMixin(object):
     def normalize(self, instance, attrname, attr_suffix_list):
         values = []
         for attr_suffix in attr_suffix_list:
-            print getattr(instance, '{}_{}'.format(attrname, attr_suffix))
+            print(getattr(instance, '{}_{}'.format(attrname, attr_suffix)))
             values.append(getattr(instance, '{}_{}'.format(attrname, attr_suffix)))
         return values

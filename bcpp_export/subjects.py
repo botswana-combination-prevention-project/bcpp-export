@@ -24,16 +24,24 @@ SUBJECT_IDENTIFIER = 'subject_identifier'
 DEFAULTER = 2
 ON_ART = 3
 NAIVE = 1
-DWTA = 'DWTA'
+DWTA = 4
 POS = 1
 NEG = 0
+IND = 2
 YES = 1
-NO = 0
+NO = 2
+UNK = 3
+NOT_APPLICABLE = 3
+gender = {'M': 1, 'F': 2}
+hiv_options = {'POS': POS, 'NEG': NEG, 'IND': IND, 'UNK': UNK, 'not_answering': DWTA, None: np.nan}
+tf = {True: YES, False: NO, None: np.nan}
+yes_no = {'Yes': YES, 'No': NO, '1': YES, '2': NO, 'N/A': NOT_APPLICABLE, None: np.nan, 'DWTA': DWTA, 'Not Sure': 5}
 
 
 class DerivedVariables(object):
 
     def __init__(self, row):
+        self.subject_identifier = row['subject_identifier']
         self.arv_evidence = row['arv_evidence']
         self.ever_taken_arv = row['ever_taken_arv']
         self.has_tested = row['has_tested']
@@ -81,21 +89,22 @@ class DerivedVariables(object):
 
     @property
     def final_hiv_status(self):
-        # HIV status: 1 = infected, 0 = uninfected *;
         final_hiv_status = np.nan
         if self.today_hiv_result in (POS, NEG):
             final_hiv_status = self.today_hiv_result
+        elif self.documented_pos == YES:
+            final_hiv_status = POS
         else:
-            if pd.notnull(self.documented_pos):
-                final_hiv_status = POS
+            final_hiv_status = UNK
         return final_hiv_status
 
     @property
     def final_arv_status(self):
-        """1: art naive, 2: art defaulter,  3: on art ;"""
         final_arv_status = np.nan
         if self.final_hiv_status == POS:
-            if self.ever_taken_arv in (NO, DWTA, np.nan):
+            if pd.isnull(self.ever_taken_arv):
+                final_arv_status = NAIVE
+            elif self.ever_taken_arv in (NO, 'DWTA'):
                 final_arv_status = NAIVE
             elif self.ever_taken_arv == YES and self.on_arv == NO:
                 final_arv_status = DEFAULTER
@@ -105,8 +114,13 @@ class DerivedVariables(object):
                 final_arv_status = ON_ART
             elif self.ever_taken_arv == YES and self.on_arv == YES:
                 final_arv_status = ON_ART
-            elif self.arv_evidence == YES and self.on_arv is None and self.ever_taken_arv is None:
+            elif self.arv_evidence == YES and pd.isnull(self.on_arv) and pd.isnull(self.ever_taken_arv):
+                # unreachable !!
                 final_arv_status = ON_ART
+            else:
+                raise TypeError('Cannot determine final_arv_status for {}. '
+                                'Got ever_taken_arv={}, on_arv={}, arv_evidence={}'.format(
+                                    self.subject_identifier, self.ever_taken_arv, self.on_arv, self.arv_evidence))
         return final_arv_status
 
     @property
@@ -126,6 +140,10 @@ class DerivedVariables(object):
 class Subjects(object):
 
     """A class to generate a dataset of bcpp subject data for a given survey year.
+
+        from bcpp_export.subjects import Subjects
+        s = Subjects('bcpp-year-1')
+        s.results
 
         from bcpp_export.subjects import Subjects
         s = Subjects('bcpp-year-1')
@@ -195,11 +213,6 @@ class Subjects(object):
             'currently_pregnant': 'pregnant'})
 
     def map_responses(self):
-        gender = {'M': 1, 'F': 2}
-        hiv_options = {'POS': 1, 'NEG': 0, 'IND': 2, 'UNK': 3, 'not_answering': 4, None: np.nan}
-        tf = {True: 1, False: 2, None: np.nan}
-        yes_no = {'Yes': 1, 'No': 2, 'N/A': 3, None: np.nan, 'DWTA': 4, 'Not Sure': 5}
-        yes_no_str = {'Yes': 1, 'No': 2, '1': 1, '2': 2, None: np.nan}
         self._results['gender'] = self._results['gender'].map(gender.get)
         self._results['citizen'] = self._results['citizen'].map(yes_no.get)
         self._results['circumcised'] = self._results['circumcised'].map(yes_no.get)
@@ -216,7 +229,7 @@ class Subjects(object):
         self._results['result_recorded'] = self._results['result_recorded'].map(hiv_options.get)
         self._results['recorded_hiv_result'] = self._results['recorded_hiv_result'].map(hiv_options.get)
         self._results['today_hiv_result'] = self._results['today_hiv_result'].map(hiv_options.get)
-        self._results['referred'] = self._results['referred'].map(yes_no_str.get)
+        self._results['referred'] = self._results['referred'].map(yes_no.get)
         self._results['part_time_resident'] = self._results['part_time_resident'].map(tf.get)
 
     def add_derived_columns(self):

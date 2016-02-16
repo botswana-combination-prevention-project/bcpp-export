@@ -10,8 +10,12 @@ https://docs.djangoproject.com/en/1.6/ref/settings/
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
+import socket
+import sys
+
 from unipath import Path
 
+DEVELOPER_HOSTS = ['mac2-2.local']
 BASE_DIR = Path(os.path.dirname(os.path.realpath(__file__)))
 GIT_DIR = BASE_DIR.ancestor(1)
 
@@ -59,20 +63,30 @@ WSGI_APPLICATION = 'bcpp_export.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/1.6/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'OPTIONS': {
-            'init_command': 'SET storage_engine=INNODB',
+if 'test' in sys.argv and socket.gethostname() in DEVELOPER_HOSTS:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        }
+    }
+# elif 'test' in sys.argv:
+#     DATABASES = TRAVIS_MYSQL
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'OPTIONS': {
+                'init_command': 'SET storage_engine=INNODB',
+            },
+            'NAME': 'bhp066_master',
+            'USER': 'root',
+            'PASSWORD': 'cc3721b',
+            'HOST': '127.0.0.1',
+            'PORT': '10000',
+            'ATOMIC_REQUESTS': True,
         },
-        'NAME': 'bhp066_master',
-        'USER': 'root',
-        'PASSWORD': 'cc3721b',
-        'HOST': '',
-        'PORT': '',
-        'ATOMIC_REQUESTS': True,
-    },
-}
+    }
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.6/topics/i18n/

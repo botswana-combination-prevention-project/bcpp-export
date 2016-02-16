@@ -20,121 +20,14 @@ from bhp066.apps.bcpp_subject.models.circumcision import Circumcision
 from bhp066.apps.bcpp_subject.models.reproductive_health import ReproductiveHealth
 from bhp066.apps.bcpp_subject.models.residency_mobility import ResidencyMobility
 
+from .constants import (YES, NO, DEFAULTER, DWTA, IND, NAIVE, NEG, NOT_APPLICABLE, ON_ART,
+                        POS, UNK, gender, hiv_options, tf, yes_no)
+from .derived_vars import DerivedVariables
+
+from bhp066.apps.bcpp_subject.models.elisa_hiv_result import ElisaHivResult
+from bcpp_export.constants import ART_PRESCRIPTION
+
 SUBJECT_IDENTIFIER = 'subject_identifier'
-DEFAULTER = 2
-ON_ART = 3
-NAIVE = 1
-DWTA = 4
-POS = 1
-NEG = 0
-IND = 2
-YES = 1
-NO = 2
-UNK = 3
-NOT_APPLICABLE = 3
-gender = {'M': 1, 'F': 2}
-hiv_options = {'POS': POS, 'NEG': NEG, 'IND': IND, 'UNK': UNK, 'not_answering': DWTA, None: np.nan}
-tf = {True: YES, False: NO, None: np.nan}
-yes_no = {'Yes': YES, 'No': NO, '1': YES, '2': NO, 'N/A': NOT_APPLICABLE, None: np.nan, 'DWTA': DWTA, 'Not Sure': 5}
-
-
-class DerivedVariables(object):
-
-    def __init__(self, row):
-        self.subject_identifier = row['subject_identifier']
-        self.arv_evidence = row['arv_evidence']
-        self.ever_taken_arv = row['ever_taken_arv']
-        self.has_tested = row['has_tested']
-        self.on_arv = row['on_arv']
-        self.other_record = row['other_record']
-        self.recorded_hiv_result = row['recorded_hiv_result']
-        self.recorded_hiv_result_date = row['recorded_hiv_result_date']
-        self.result_recorded = row['result_recorded']
-        self.result_recorded_date = row['result_recorded_date']
-        self.self_reported_result = row['self_reported_result']
-        self.today_hiv_result = row['today_hiv_result']
-
-    @property
-    def prev_result_known(self):
-        prev_result_known = np.nan
-        if self.recorded_hiv_result in (POS, NEG) or self.final_arv_status in (DEFAULTER, ON_ART):
-            prev_result_known = YES
-        elif self.result_recorded == POS and self.final_hiv_status == NEG:
-            prev_result_known = NO
-        elif self.result_recorded in (NEG, POS):
-            prev_result_known = YES
-        return prev_result_known
-
-    @property
-    def prev_result(self):
-        prev_result = np.nan
-        if pd.isnull(self.prev_result_known):
-            if self.final_hiv_status == NEG:
-                prev_result = NEG
-            elif (self.recorded_hiv_result == POS or self.result_recorded == POS or
-                  self.final_arv_status in (DEFAULTER, ON_ART)):
-                prev_result = POS
-            else:
-                prev_result = NEG
-        return prev_result
-
-    @property
-    def prev_result_date(self):
-        prev_result_date = np.nan
-        if self.prev_result_known == YES:
-            prev_result_date = self.recorded_hiv_result_date
-        if pd.isnull(self.recorded_hiv_result_date):
-            prev_result_date = self.result_recorded_date
-        return prev_result_date
-
-    @property
-    def final_hiv_status(self):
-        final_hiv_status = np.nan
-        if self.today_hiv_result in (POS, NEG):
-            final_hiv_status = self.today_hiv_result
-        elif self.documented_pos == YES:
-            final_hiv_status = POS
-        else:
-            final_hiv_status = UNK
-        return final_hiv_status
-
-    @property
-    def final_arv_status(self):
-        final_arv_status = np.nan
-        if self.final_hiv_status == POS:
-            if pd.isnull(self.ever_taken_arv):
-                final_arv_status = NAIVE
-            elif self.ever_taken_arv in (NO, 'DWTA'):
-                final_arv_status = NAIVE
-            elif self.ever_taken_arv == YES and self.on_arv == NO:
-                final_arv_status = DEFAULTER
-            elif self.arv_evidence == YES and self.on_arv == NO:
-                final_arv_status = DEFAULTER
-            elif self.arv_evidence == YES and self.on_arv == YES:
-                final_arv_status = ON_ART
-            elif self.ever_taken_arv == YES and self.on_arv == YES:
-                final_arv_status = ON_ART
-            elif self.arv_evidence == YES and pd.isnull(self.on_arv) and pd.isnull(self.ever_taken_arv):
-                # unreachable !!
-                final_arv_status = ON_ART
-            else:
-                raise TypeError('Cannot determine final_arv_status for {}. '
-                                'Got ever_taken_arv={}, on_arv={}, arv_evidence={}'.format(
-                                    self.subject_identifier, self.ever_taken_arv, self.on_arv, self.arv_evidence))
-        return final_arv_status
-
-    @property
-    def documented_pos(self):
-        documented_pos = np.nan
-        if (self.recorded_hiv_result == POS or (self.other_record == YES and self.result_recorded == POS) or
-                self.arv_evidence == YES):
-            documented_pos = YES
-        elif (self.recorded_hiv_result not in (POS, NEG) and
-                not (self.other_record == YES and self.result_recorded == POS)):
-            documented_pos = np.nan
-        else:
-            documented_pos = NO
-        return documented_pos
 
 
 class Subjects(object):
@@ -164,12 +57,13 @@ class Subjects(object):
         self._subject_households = pd.DataFrame()
         self._subject_pimas = pd.DataFrame()
         self._subject_referrals = pd.DataFrame()
-        self._today_hiv_test = pd.DataFrame()
+        self._today_hiv_result = pd.DataFrame()
+        self._elisa_hiv_result = pd.DataFrame()
         self.survey_name = survey_name
 
     def to_csv(self, path=None, columns=None):
         self.results.to_csv(
-            path_or_buf=os.path.expanduser(path or '~/bcpp_export.csv'),
+            path_or_buf=os.path.expanduser(path or '~/bcpp_export_subjects.csv'),
             na_rep='',
             encoding='utf8',
             date_format='%Y-%m-%d %H:%M',
@@ -181,8 +75,8 @@ class Subjects(object):
             self.merge_dataframes()
             self.rename_columns()
             self.map_responses()
+            self.update_columns()
             self.add_derived_columns()
-            self._results = self._results.fillna(value=np.nan)
         return self._results
 
     def merge_dataframes(self):
@@ -232,6 +126,10 @@ class Subjects(object):
         self._results['referred'] = self._results['referred'].map(yes_no.get)
         self._results['part_time_resident'] = self._results['part_time_resident'].map(tf.get)
 
+    def update_columns(self):
+        self._results['arv_evidence'] = self._results.apply(
+            lambda row: YES if row['result_recorded_document'] == ART_PRESCRIPTION else row['arv_evidence'], axis=1)
+
     def add_derived_columns(self):
         self._results['timestamp'] = timezone.now()
         self._results['age_in_years'] = self._results.apply(
@@ -246,6 +144,9 @@ class Subjects(object):
             lambda row: DerivedVariables(row).final_hiv_status, axis=1)
         self._results['final_arv_status'] = self._results.apply(
             lambda row: DerivedVariables(row).final_arv_status, axis=1)
+
+    def datetime_to_date(self, field):
+        return field.date() if pd.notnull(field) else field
 
     @property
     def df_subject_consents(self):
@@ -290,19 +191,37 @@ class Subjects(object):
     @property
     def df_today_hiv_result(self):
         """Return a dataframe of a selection of values from today's hiv test result, if performed."""
-        if self._today_hiv_test.empty:
+        if self._today_hiv_result.empty:
             columns = ['subject_visit__household_member__registered_subject__subject_identifier',
                        'hiv_result', 'hiv_result_datetime', 'why_not_tested']
             qs = HivResult.objects.values_list(*columns).filter(
                 subject_visit__household_member__household_structure__survey__survey_slug=self.survey_name)
             df = pd.DataFrame(list(qs), columns=columns)
-            self._today_hiv_test = df.rename(columns={
+            self._today_hiv_result = df.rename(columns={
                 'subject_visit__household_member__registered_subject__subject_identifier': SUBJECT_IDENTIFIER,
                 'hiv_result': 'today_hiv_result',
-                'hiv_result_datetime': 'today_hiv_result_datetime',
+                'hiv_result_datetime': 'today_hiv_result_date',
                 'why_not_tested': 'reason_not_tested_today'})
+            self._today_hiv_result['today_hiv_result_date'] = self._today_hiv_result.apply(
+                lambda row: self.datetime_to_date(row['today_hiv_result_date']), axis=1)
+        return self._today_hiv_result
 
-        return self._today_hiv_test
+    @property
+    def df_elisa_hiv_result(self):
+        """Return a dataframe of a selection of values from today's hiv test result, if performed."""
+        if self._elisa_hiv_result.empty:
+            columns = ['subject_visit__household_member__registered_subject__subject_identifier',
+                       'hiv_result', 'hiv_result_datetime']
+            qs = ElisaHivResult.objects.values_list(*columns).filter(
+                subject_visit__household_member__household_structure__survey__survey_slug=self.survey_name)
+            df = pd.DataFrame(list(qs), columns=columns)
+            self._elisa_hiv_result = df.rename(columns={
+                'subject_visit__household_member__registered_subject__subject_identifier': SUBJECT_IDENTIFIER,
+                'hiv_result': 'elisa_hiv_result',
+                'hiv_result_datetime': 'elisa_hiv_result_date'})
+            self._elisa_hiv_result['elisa_hiv_result_date'] = self._elisa_hiv_result.apply(
+                lambda row: self.datetime_to_date(row['elisa_hiv_result_date']), axis=1)
+        return self._elisa_hiv_result
 
     @property
     def df_hiv_testing_history(self):
@@ -327,20 +246,20 @@ class Subjects(object):
             self._hiv_test_review = df.rename(columns={
                 'subject_visit__household_member__registered_subject__subject_identifier': SUBJECT_IDENTIFIER,
                 'hiv_test_date': 'recorded_hiv_result_date'})
-
         return self._hiv_test_review
 
     @property
     def df_hiv_result_documentation(self):
         if self._hiv_result_documentation.empty:
             columns = ['subject_visit__household_member__registered_subject__subject_identifier',
-                       'result_recorded', 'result_date']
+                       'result_recorded', 'result_date', 'result_doc_type']
             qs = HivResultDocumentation.objects.values_list(*columns).filter(
                 subject_visit__household_member__household_structure__survey__survey_slug=self.survey_name)
             df = pd.DataFrame(list(qs), columns=columns)
             self._hiv_result_documentation = df.rename(columns={
                 'subject_visit__household_member__registered_subject__subject_identifier': SUBJECT_IDENTIFIER,
-                'result_date': 'result_recorded_date'})
+                'result_date': 'result_recorded_date',
+                'result_doc_type': 'result_recorded_document'})
         return self._hiv_result_documentation
 
     @property

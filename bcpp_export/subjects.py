@@ -144,6 +144,8 @@ class Subjects(object):
             lambda row: DerivedVariables(row).final_hiv_status, axis=1)
         self._results['final_arv_status'] = self._results.apply(
             lambda row: DerivedVariables(row).final_arv_status, axis=1)
+        self._results['final_hiv_status_date'] = self._results.apply(
+            lambda row: DerivedVariables(row).prev_result_date, axis=1)
 
     def datetime_to_date(self, field):
         return field.date() if pd.notnull(field) else field
@@ -180,7 +182,7 @@ class Subjects(object):
             columns = [
                 'subject_visit__household_member__registered_subject__subject_identifier',
                 'arv_clinic', 'export_uuid', 'referral_clinic', 'referral_code', 'subject_referred',
-                'hiv_result_datetime', 'part_time_resident', 'vl_sample_drawn_datetime']
+                'part_time_resident', 'vl_sample_drawn_datetime']
             qs = SubjectReferral.objects.values_list(*columns).filter(
                 subject_visit__household_member__household_structure__survey__survey_slug=self.survey_name)
             df = pd.DataFrame(list(qs), columns=columns)

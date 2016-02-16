@@ -36,7 +36,16 @@ class DerivedVariables(object):
         self.prepare_final_arv_status()
         self.prepare_previous_status_date_and_awareness()
 
+    @property
+    def final_hiv_status_date(self):
+        if self.prev_result_known == YES:
+            final_hiv_status_date = self.prev_result_date
+        else:
+            final_hiv_status_date = self.today_hiv_result_date
+        return final_hiv_status_date
+
     def prepare_previous_status_date_and_awareness(self):
+        """Prepare prev_result, prev_result_date, and prev_result_known."""
         if self.recorded_hiv_result == POS:
             self.prev_result = POS
             self.prev_result_date = self.recorded_hiv_result_date

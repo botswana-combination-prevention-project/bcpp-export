@@ -67,10 +67,6 @@ class Households(object):
     def members(self):
         return self.df_members
 
-    @property
-    def subjects(self):
-        return self.subjects.results
-
     def merge_dataframes(self):
         self._households = pd.merge(
             self.df_households, self.df_plots, how='left', on=PLOT_IDENTIFIER)

@@ -18,7 +18,7 @@ from unipath import Path
 DEVELOPER_HOSTS = ['mac2-2.local']
 BASE_DIR = Path(os.path.dirname(os.path.realpath(__file__)))
 GIT_DIR = BASE_DIR.ancestor(1)
-
+ETC_PATH = Path(os.path.dirname(os.path.realpath(__file__))).ancestor(1).child('etc')
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.6/howto/deployment/checklist/
 
@@ -89,12 +89,11 @@ elif 'test' in sys.argv:  # TRAVIS
 
 else:
     # if remote, ssh -f -N -L 10000:127.0.0.1:3306 django@edc.bhp.org.bw
-    PATH = Path(os.path.dirname(os.path.realpath(__file__))).ancestor(2).child('etc')
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
             'OPTIONS': {
-                'read_default_file': os.path.join(PATH, 'default.cnf'),
+                'read_default_file': os.path.join(ETC_PATH, 'default.cnf'),
             },
             'HOST': '',
             'PORT': '',

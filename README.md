@@ -4,7 +4,10 @@
 
 Export analysis datasets of Plot, Household, Enumeration and Participants data from the "BCPP" Edc.
 
-##Usage
+## Subjects
+###Usage
+
+Note: If you are also producing the Plot, Household, and Enumeration files, export the Subjects CSV file from the `Households` class instead as the `Household` class calls the `Subjects` class. See section below on `Households`
 
     from bcpp_export.subjects import Subjects
     
@@ -31,7 +34,11 @@ The dataframes are passed `django` model `values_list`. Encrypted field values (
     >>> s = Subjects('bcpp-year-1', merge_on='household_member', add_identity256=True)
     >>> s.results['identity256'][0] = '6d24639a6bd16765f3518d2e67146eb5950a7a05b6c8956e639423ac1042da74'
     
-
+## Households
     
+### Usage
     
+    from bcpp_export.subjects import Households
+    
+    h = Households('bcpp-year-1', merge_on='household_member', add_identity256=True)
     

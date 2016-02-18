@@ -22,46 +22,68 @@ PLOT_IDENTIFIER = 'plot_identifier'
 
 class Households(object):
 
-    def __init__(self, survey_name):
+    def __init__(self, survey_name, merge_subjects_on=None, add_identity256=None):
         self._households = pd.DataFrame()
         self._plots = pd.DataFrame()
         self._members = pd.DataFrame()
-        self._results = pd.DataFrame()
+        self._households = pd.DataFrame()
         self.survey_name = survey_name
-        self.subjects = Subjects(self.survey_name)
+        self.subjects = Subjects(self.survey_name, merge_subjects_on, add_identity256)
 
-    def to_csv(self, path=None, columns=None):
-        self.results.to_csv(
-            path_or_buf=os.path.expanduser(path or '~/bcpp_export_households.csv'),
-            na_rep='',
-            encoding='utf8',
-            date_format='%Y-%m-%d %H:%M',
-            cols=columns or self.results.columns)
+    def to_csv(self, dataset_name, path=None, columns=None):
+        for name in self.dataset_names(dataset_name):
+            df = getattr(self, name)
+            df.to_csv(
+                path_or_buf=os.path.expanduser(path or '~/bcpp_export_{}.csv'.format(name)),
+                na_rep='',
+                encoding='utf8',
+                date_format='%Y-%m-%d %H:%M',
+                cols=columns)
+
+    def dataset_names(self, dataset_name):
+        """Return the dataset_name(s) to export as a list or if dataset_name == all return a
+        list of all dataset_names."""
+        valid_dataset_names = ['plots', 'households', 'members', 'subjects', 'all']
+        if dataset_name not in valid_dataset_names:
+            raise TypeError('Invalid dataset name, expected one of {}'.format(valid_dataset_names))
+        if dataset_name == 'all':
+            dataset_names = ['plots', 'households', 'members', 'subjects']
+        else:
+            dataset_names = [dataset_name]
+        return dataset_names
 
     @property
-    def results(self):
-        if self._results.empty:
+    def households(self):
+        if self._households.empty:
             self.merge_dataframes()
-            # self.rename_columns()
-            # self.map_responses()
             self.add_derived_columns()
-            # self._results = self._results.fillna(value=np.nan)
-        return self._results
+        return self._households
+
+    @property
+    def plots(self):
+        return self.df_plots
+
+    @property
+    def members(self):
+        return self.df_members
+
+    @property
+    def subjects(self):
+        return self.subjects.results
 
     def merge_dataframes(self):
-        self._results = pd.merge(
+        self._households = pd.merge(
             self.df_households, self.df_plots, how='left', on=PLOT_IDENTIFIER)
+
+    def add_derived_columns(self):
+        self._households['enrolled'] = self.households.apply(lambda row: self.enrolled(row), axis=1)
+        self._plots['enrolled'] = self._plots.apply(lambda row: self.enrolled(row), axis=1)
 
     def enrolled(self, row):
         df = self.subjects.results
         if not df[df[PLOT_IDENTIFIER] == row[PLOT_IDENTIFIER]].plot_identifier.empty:
             return YES
         return NO
-
-    def add_derived_columns(self):
-        # self._results['allocation'] = self._results.apply(lambda row: 'bhs' if row['bhs'] is True else 'htc', axis=1)
-        self._results['enrolled'] = self.results.apply(lambda row: self.enrolled(row), axis=1)
-        self._plots['enrolled'] = self._plots.apply(lambda row: self.enrolled(row), axis=1)
 
     @property
     def df_plots(self):

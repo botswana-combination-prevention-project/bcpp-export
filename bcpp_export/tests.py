@@ -32,6 +32,7 @@ class TestSubject(TestCase):
             'self_reported_result': None,
             'today_hiv_result': None,
             'today_hiv_result_date': None,
+            'identity': None,
         }
 
     def test(self):

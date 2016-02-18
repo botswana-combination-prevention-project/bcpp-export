@@ -1,2 +1,3 @@
 # bcpp_export
-export data from the "BCPP" EDC
+
+Export analysis datasets of Plot, Household, Enumeration and Participants data from the "BCPP" Edc.

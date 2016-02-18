@@ -98,8 +98,8 @@ else:
             'NAME': 'bhp066_master',
             'USER': 'root',
             'PASSWORD': 'cc3721b',
-            'HOST': '127.0.0.1',
-            'PORT': '10000',
+            #'HOST': '127.0.0.1',
+            #'PORT': '10000',
             'ATOMIC_REQUESTS': True,
         },
     }
@@ -128,7 +128,7 @@ MIDDLEMAN_DEVICE_ID_LIST = []
 PROJECT_ROOT = BASE_DIR.ancestor(1)
 FIELD_MAX_LENGTH = 'default'
 IS_SECURE_DEVICE = True
-# KEY_PATH = '/Volumes/bhp066/live_keys'  # BASE_DIR.ancestor(1)
+KEY_PATH = '/Volumes/bhp066/live_keys'  # BASE_DIR.ancestor(1)
 KEY_PREFIX = 'user'
 ALLOW_MODEL_SERIALIZATION = True
 MAX_SUBJECTS = 0

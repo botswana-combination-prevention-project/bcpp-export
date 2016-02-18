@@ -1,15 +1,22 @@
-import pandas as pd
+import hashlib
 import numpy as np
+import pandas as pd
+import re
 
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
+from edc.core.crypto_fields.classes import FieldCryptor
 
 from .constants import (YES, NO, DEFAULTER, NAIVE, NEG, ON_ART, POS, UNK, SUBJECT_IDENTIFIER, edc_ART_PRESCRIPTION)
+from django.core.exceptions import ImproperlyConfigured
 
 
 class DerivedVariables(object):
 
+    """A class that prepares variables whose value are derived from raw Edc stored values."""
+
     def __init__(self, row, counter=None):
+        self._identity256 = np.nan
         self.subject_identifier = row[SUBJECT_IDENTIFIER]
         self.arv_evidence = row['arv_evidence']
         self.ever_taken_arv = row['ever_taken_arv']
@@ -26,6 +33,7 @@ class DerivedVariables(object):
         self.elisa_hiv_result = row['elisa_hiv_result']
         self.elisa_hiv_result_date = row['elisa_hiv_result_date']
         self.result_recorded_document = row['result_recorded_document']
+        self.identity = row['identity']
         if self.result_recorded_document == edc_ART_PRESCRIPTION:
             self.arv_evidence = YES
         self.age_in_years = relativedelta(row['consent_datetime'].date(), row['dob']).years
@@ -42,6 +50,17 @@ class DerivedVariables(object):
         self.prepare_final_hiv_status_and_date()
         self.prepare_final_arv_status()
         self.prepare_previous_status_date_and_awareness()
+
+    @property
+    def identity256(self):
+        if pd.isnull(self._identity256):
+            field_cryptor = FieldCryptor('rsa', 'restricted')
+            identity = field_cryptor.decrypt(self.identity)
+            if identity.startswith('enc1::'):
+                raise ImproperlyConfigured(
+                    'Cannot decrypt identity, specify path to the encryption keys in settings.KEYPATH')
+            self._identity256 = hashlib.sha256(identity).digest().encode("hex")
+        return self._identity256
 
     @property
     def final_hiv_status_date(self):

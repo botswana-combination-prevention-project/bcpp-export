@@ -25,8 +25,9 @@ class Subjects(object):
 
     """
 
-    def __init__(self, survey_name, merge_on=None):
+    def __init__(self, survey_name, merge_on=None, add_identity256=None):
         self.merge_on = merge_on or HOUSEHOLD_MEMBER
+        self.add_identity256 = True if add_identity256 is True else False
         if self.merge_on not in (SUBJECT_IDENTIFIER, HOUSEHOLD_MEMBER):
             raise TypeError(
                 'Invalid merge_on column. Expected one of {}.'.format((SUBJECT_IDENTIFIER, HOUSEHOLD_MEMBER)))
@@ -111,6 +112,8 @@ class Subjects(object):
             'prev_result_date',
             'prev_result_known',
         ]
+        if self.add_identity256:
+            attrnames.append('identity256')
         for attrname in attrnames:
             self._results[attrname] = self._results.apply(
                 lambda row: getattr(DerivedVariables(row), attrname), axis=1)

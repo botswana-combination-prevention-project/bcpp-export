@@ -4,6 +4,7 @@
 
 Export analysis datasets of Plot, Household, Enumeration and Participants data from the "BCPP" Edc.
 
+##Usage
 
     from bcpp_export.subjects import Subjects
     
@@ -18,4 +19,19 @@ The exported dataframe is `pandas` dataframe:
     
 The exported dataframe, '`s.results` is a merge of all dataframes. Merge is a LEFT merge on `household_member`.
 
-All dataframes in the class, with the exception of `results` are `pandas` dataframes and  prefixed are with `df_`.
+All dataframes are `pandas` dataframes. All dataframes are prefixed with `df_` with the exception of `results`.
+
+Uses BCPP Edc 1.11.117, see requirements.txt.
+
+## identity256
+The dataframes are passed `django` model `values_list`. Encrypted field values (e.g. PII) are not decrypted by `django` for `values_lists`. To include a `sha256` representation of the personal identifier specify `add_identity256=True` when instantiating the `Subjects` class. Ensure the settings attribute `KEYPATH` points to the valid encryption keys. 
+    
+    IMPORTANT: the value of identity256 is not encrypted so the dataset should be considered sensitive.
+
+    >>> s = Subjects('bcpp-year-1', merge_on='household_member', add_identity256=True)
+    >>> s.results['identity256'][0] = 
+    
+
+    
+    
+    

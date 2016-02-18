@@ -42,8 +42,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # 'edc_crypto_fields',
-    # 'apps.bcpp_subject',
+    'edc.core.crypto_fields',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -72,6 +71,7 @@ if 'test' in sys.argv and socket.gethostname() in DEVELOPER_HOSTS:
     }
 # elif 'test' in sys.argv:
 #     DATABASES = TRAVIS_MYSQL
+# if remote, ssh -f -N -L 10000:127.0.0.1:3306 django@edc.bhp.org.bw
 else:
     DATABASES = {
         'default': {
@@ -112,7 +112,7 @@ MIDDLEMAN_DEVICE_ID_LIST = []
 PROJECT_ROOT = BASE_DIR.ancestor(1)
 FIELD_MAX_LENGTH = 'default'
 IS_SECURE_DEVICE = True
-KEY_PATH = '/Volumes/bhp066/live_keys'  # BASE_DIR.ancestor(1)
+# KEY_PATH = '/Volumes/bhp066/live_keys'  # BASE_DIR.ancestor(1)
 KEY_PREFIX = 'user'
 ALLOW_MODEL_SERIALIZATION = True
 MAX_SUBJECTS = 0

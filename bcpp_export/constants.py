@@ -4,9 +4,15 @@ from edc_constants.constants import (ALIVE as edc_ALIVE, DEAD as edc_DEAD, YES a
                                      NOT_APPLICABLE as edc_NOT_APPLICABLE,
                                      MALE as edc_MALE, FEMALE as edc_FEMALE)
 
+
+SUBJECT_IDENTIFIER = 'subject_identifier'
+HOUSEHOLD_MEMBER = 'household_member'
+
 edc_DWTA = 'DWTA'
+edc_NOT_SURE = 'Not Sure'
+edc_ART_PRESCRIPTION = 'ART Prescription'
+
 ALIVE = 1
-ART_PRESCRIPTION = 'ART Prescription'
 DEAD = 0
 DEFAULTER = 2
 DWTA = 4
@@ -15,8 +21,9 @@ IND = 2
 MALE = 1
 NAIVE = 1
 NEG = 0
-NO = 2
+NO = 0
 NOT_APPLICABLE = 3
+NOT_SURE = 5
 ON_ART = 3
 POS = 1
 UNK = 3
@@ -29,7 +36,7 @@ hiv_options = {edc_POS: POS, edc_NEG: NEG, edc_IND: IND, edc_UNK: UNK, 'not_answ
 tf = {True: YES, False: NO, None: np.nan}
 
 yes_no = {
-    edc_YES: YES, edc_NO: NO, '1': YES, '2': NO, edc_NOT_APPLICABLE: NOT_APPLICABLE,
-    None: np.nan, edc_DWTA: DWTA, 'Not Sure': 5}
+    edc_YES: YES, edc_NO: NO, '1': YES, '0': NO, edc_NOT_APPLICABLE: NOT_APPLICABLE,
+    None: np.nan, edc_DWTA: DWTA, edc_NOT_SURE: NOT_SURE}
 
 survival = {edc_ALIVE: ALIVE, edc_DEAD: DEAD, None: np.nan}

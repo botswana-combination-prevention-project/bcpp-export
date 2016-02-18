@@ -10,6 +10,7 @@ factory-boy==2.4.1
 geo-utils
 geopy
 numpy
+pandas
 python-dateutil
 pytz
 git+https://github.com/erikvw/django-crypto-fields@master#egg=django_crypto_fields

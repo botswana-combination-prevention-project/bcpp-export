@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/botswana-harvard/bcpp-export.svg?branch=develop)](https://travis-ci.org/botswana-harvard/bcpp-export)
+
 # bcpp_export
 
 Export analysis datasets of Plot, Household, Enumeration and Participants data from the "BCPP" Edc.

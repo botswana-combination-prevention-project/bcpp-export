@@ -29,7 +29,7 @@ The dataframes are passed `django` model `values_list`. Encrypted field values (
     IMPORTANT: the value of identity256 is not encrypted so the dataset should be considered sensitive.
 
     >>> s = Subjects('bcpp-year-1', merge_on='household_member', add_identity256=True)
-    >>> s.results['identity256'][0] = 
+    >>> s.results['identity256'][0] = '6d24639a6bd16765f3518d2e67146eb5950a7a05b6c8956e639423ac1042da74'
     
 
     

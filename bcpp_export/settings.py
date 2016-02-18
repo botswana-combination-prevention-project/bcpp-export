@@ -98,8 +98,8 @@ else:
             'NAME': 'bhp066_master',
             'USER': 'root',
             'PASSWORD': 'cc3721b',
-            #'HOST': '127.0.0.1',
-            #'PORT': '10000',
+            'HOST': '127.0.0.1',
+            'PORT': '10000',
             'ATOMIC_REQUESTS': True,
         },
     }

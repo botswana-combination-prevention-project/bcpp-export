@@ -114,7 +114,7 @@ class Households(object):
     def df_members(self):
         if self._members.empty:
             columns = [
-                'gender', 'age_in_years', 'survival_status', 'study_resident',
+                'registered_subject', 'gender', 'age_in_years', 'survival_status', 'study_resident',
                 'household_structure__household__household_identifier',
                 'household_structure__household__plot__plot_identifier',
                 'household_structure__survey__survey_slug',

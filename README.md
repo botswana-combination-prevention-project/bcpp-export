@@ -52,3 +52,44 @@ write each dataframe to csv individually
 or write all in one call
 
     h.to_csv('all')  # creates all listed above
+
+## Examples
+
+### Select data just for CPC communities from pairs 1 to 13
+
+    import os
+    import pandas as pd
+
+    communities = [
+        'digawana', 'lentsweletau', 'lerala', 'maunatlala', 'mmankgodi', 'oodi', 'otse', 'shoshong', 'tati_siding',
+        'nkange', 'mathangwane', 'gweta', 'gumare']
+    
+    options = dict(
+        path_or_buf=os.path.expanduser('~/bcpp_export_{}.csv'.format(name)),
+        na_rep='',
+        encoding='utf8',
+        date_format='%Y-%m-%d %H:%M')
+
+    name = 'plots_cpc_1-13'
+    df = pd.read_csv('~/bcpp_export_plots.csv')
+    df1 = df[df['community'].isin(communities)]
+    df1.to_csv(**options)
+
+    name = 'households_cpc-1-13'
+    options.update(path_or_buf=os.path.expanduser('~/bcpp_export_{}.csv'.format(name)))
+    df = pd.read_csv('~/bcpp_export_households.csv')
+    df1 = df[df['community'].isin(communities)]
+    df1.to_csv(**options)
+
+    name = 'members_cpc-1-13'
+    options.update(path_or_buf=os.path.expanduser('~/bcpp_export_{}.csv'.format(name)))
+    df = pd.read_csv('~/bcpp_export_members.csv')
+    df1 = df[df['community'].isin(communities)]
+    df1.to_csv(**options)
+
+    name = 'subjects_cpc-1-13'
+    options.update(path_or_buf=os.path.expanduser('~/bcpp_export_{}.csv'.format(name)))
+    df = pd.read_csv('~/bcpp_export_subjects.csv')
+    df1 = df[df['community'].isin(communities)]
+    df1.to_csv(**options)
+        

@@ -28,7 +28,7 @@ class Households(object):
         self._members = pd.DataFrame()
         self._households = pd.DataFrame()
         self.survey_name = survey_name
-        self.subjects = Subjects(self.survey_name, merge_subjects_on, add_identity256)
+        self.subjects = Subjects(self.survey_name, merge_subjects_on, add_identity256).results
 
     def to_csv(self, dataset_name, path=None, columns=None):
         for name in self.dataset_names(dataset_name):
@@ -76,7 +76,7 @@ class Households(object):
         self._plots['enrolled'] = self._plots.apply(lambda row: self.enrolled(row), axis=1)
 
     def enrolled(self, row):
-        df = self.subjects.results
+        df = self.subjects
         if not df[df[PLOT_IDENTIFIER] == row[PLOT_IDENTIFIER]].plot_identifier.empty:
             return YES
         return NO
@@ -89,7 +89,8 @@ class Households(object):
             df = pd.DataFrame(list(qs), columns=columns)
             self._plots = df.rename(columns={
                 'modified': 'plot_modified',
-            })
+                'action': 'confirmed'})
+            self._plots['confirmed'] = self._plots['confirmed'].map({'confirmed': 1, 'unconfirmed': 0}.get)
         return self._plots
 
     @property
@@ -117,6 +118,7 @@ class Households(object):
                 'registered_subject', 'gender', 'age_in_years', 'survival_status', 'study_resident',
                 'household_structure__household__household_identifier',
                 'household_structure__household__plot__plot_identifier',
+                'household_structure__household__plot__plot__community',
                 'household_structure__survey__survey_slug',
                 'inability_to_participate', 'modified',
             ]
@@ -127,6 +129,7 @@ class Households(object):
             self._members = df.rename(columns={
                 'household_structure__household__household_identifier': 'household_identifier',
                 'household_structure__household__plot__plot_identifier': PLOT_IDENTIFIER,
+                'household_structure__household__plot__plot__community': 'community',
                 'household_structure__survey__survey_slug': 'survey',
                 'inability_to_participate': 'able_to_participate',
                 'modified': 'member_modified',

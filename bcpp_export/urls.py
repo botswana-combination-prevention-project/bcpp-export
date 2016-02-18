@@ -4,6 +4,8 @@ from django.views.generic import RedirectView
 
 from edc.lab.lab_profile.classes import site_lab_profiles
 from edc.map.classes import site_mappers
+from bhp066.apps.bcpp_household.mappers.central_server_mapper import CentralServerMapper
+from bhp066.apps.bcpp.app_configuration.classes import bcpp_app_configuration
 
 site_lab_profiles.autodiscover()
 site_mappers.autodiscover()

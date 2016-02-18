@@ -6,10 +6,6 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import get_models
 from django.views.generic import RedirectView
 
-import django_databrowse
-
-from dajaxice.core import dajaxice_autodiscover, dajaxice_config
-
 from edc.data_manager.classes import data_manager
 from edc.dashboard.section.classes import site_sections
 from edc.lab.lab_profile.classes import site_lab_profiles
@@ -37,12 +33,6 @@ admin.autodiscover()
 site_mappers.registry['digawana'] = {}
 
 site_mappers.get_current_mapper().verify_survey_dates()
-
-for model in get_models():
-    try:
-        django_databrowse.site.register(model)
-    except:
-        pass
 
 APP_NAME = 'bcpp_export'
 

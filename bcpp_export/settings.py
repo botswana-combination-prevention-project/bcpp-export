@@ -60,8 +60,6 @@ WSGI_APPLICATION = 'bcpp_export.wsgi.application'
 
 
 # Database
-# https://docs.djangoproject.com/en/1.6/ref/settings/#databases
-
 if 'test' in sys.argv and socket.gethostname() in DEVELOPER_HOSTS:
     DATABASES = {
         'default': {
@@ -69,10 +67,28 @@ if 'test' in sys.argv and socket.gethostname() in DEVELOPER_HOSTS:
             'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
         }
     }
-# elif 'test' in sys.argv:
-#     DATABASES = TRAVIS_MYSQL
-# if remote, ssh -f -N -L 10000:127.0.0.1:3306 django@edc.bhp.org.bw
+elif 'test' in sys.argv:  # TRAVIS
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': 'mb',
+            'USER': 'travis',
+            'HOST': '',
+            'PORT': '',
+            'ATOMIC_REQUESTS': True,
+        },
+        'lab_api': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': 'mb_lab',
+            'USER': 'travis',
+            'HOST': '',
+            'PORT': '',
+            'ATOMIC_REQUESTS': True,
+        },
+    }
+
 else:
+    # if remote, ssh -f -N -L 10000:127.0.0.1:3306 django@edc.bhp.org.bw
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',

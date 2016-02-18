@@ -129,6 +129,7 @@ class TestSubject(TestCase):
         self.assertEqual(obj.final_hiv_status_date, date(2016, 1, 7))
 
     def test_prev_result_none_if_absurd1(self):
+        """Assert asumes prev_result missing if previous result is absurd."""
         self.row.update(
             today_hiv_result=NEG,
             today_hiv_result_date=date(2016, 1, 7),
@@ -143,6 +144,7 @@ class TestSubject(TestCase):
         self.assertEqual(obj.final_hiv_status_date, date(2016, 1, 7))
 
     def test_prev_result_none_if_absurd2(self):
+        """Assert asumes prev_result missing if previous result is absurd."""
         self.row.update(
             today_hiv_result=NEG,
             today_hiv_result_date=date(2016, 1, 7),
@@ -174,6 +176,7 @@ class TestSubject(TestCase):
         self.assertEqual(obj.prev_result_date, date(2015, 1, 7))
 
     def test_prev_result_pos2(self):
+        """Assert sets prev_result POS and uses prev result date for final date."""
         self.row.update(
             today_hiv_result=POS,
             today_hiv_result_date=date(2016, 1, 7),
@@ -188,6 +191,7 @@ class TestSubject(TestCase):
         self.assertEqual(obj.final_hiv_status_date, date(2015, 1, 7))
 
     def test_prev_result_neg3(self):
+        """Assert sets prev_result NEG and uses today's result date for final date."""
         self.row.update(
             today_hiv_result=POS,
             today_hiv_result_date=date(2016, 1, 7),
@@ -202,6 +206,7 @@ class TestSubject(TestCase):
         self.assertEqual(obj.final_hiv_status_date, date(2016, 1, 7))
 
     def test_prev_result_missing(self):
+        """Assert all previous result values are None."""
         self.row.update(
             today_hiv_result=NEG,
             today_hiv_result_date=date(2016, 1, 7),
@@ -278,6 +283,8 @@ class TestSubject(TestCase):
         self.assertEqual(obj.final_arv_status, NAIVE)
 
     def test_arv_status_with_evidence(self):
+        """Assert final_arv_status is DEFAULTER for POS if responded as
+        never having taken ARV but we found evidence."""
         self.row.update(
             today_hiv_result=POS,
             today_hiv_result_date=date(2016, 1, 7),
@@ -293,6 +300,7 @@ class TestSubject(TestCase):
         self.assertEqual(obj.final_arv_status, DEFAULTER)
 
     def test_arv_status_on_art(self):
+        """Assert POS on ART."""
         self.row.update(
             today_hiv_result=POS,
             today_hiv_result_date=date(2016, 1, 7),
@@ -308,6 +316,7 @@ class TestSubject(TestCase):
         self.assertEqual(obj.final_arv_status, ON_ART)
 
     def test_age_in_years(self):
+        """Assert age calc."""
         self.row.update(dob=datetime(1992, 1, 15))
         obj = DerivedVariables(self.row)
         self.assertEqual(obj.age_in_years, 24)

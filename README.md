@@ -41,4 +41,14 @@ The dataframes are passed `django` model `values_list`. Encrypted field values (
     from bcpp_export.subjects import Households
     
     h = Households('bcpp-year-1', merge_on='household_member', add_identity256=True)
+
+write each dataframe to csv individually
+
+    h.to_csv('plots')  # creates ~/bcpp_export_plots.csv
+    h.to_csv('households')  # creates ~/bcpp_export_households.csv
+    h.to_csv('members')  # creates ~/bcpp_export_members.csv
+    h.to_csv('subjects')  # creates ~/bcpp_export_subjects.csv
     
+or write all in one call
+
+    h.to_csv('all')  # creates all listed above

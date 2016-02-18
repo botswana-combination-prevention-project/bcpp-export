@@ -246,7 +246,8 @@ class TestSubject(TestCase):
         self.assertEqual(obj.final_hiv_date, date(2016, 1, 7))
         self.assertEqual(obj.final_hiv_status_date, date(2016, 1, 7))
 
-    def test_arv_status(self):
+    def test_arv_status_overrides_neg_rev_result(self):
+        """Assert evidence of arv treatment overrides a NEG previous result."""
         self.row.update(
             today_hiv_result=POS,
             today_hiv_result_date=date(2016, 1, 7),
@@ -262,6 +263,7 @@ class TestSubject(TestCase):
         self.assertEqual(obj.final_arv_status, DEFAULTER)
 
     def test_arv_status_naive(self):
+        """Assert if ever_taken_arv = NO and no response for evidence of ARV treatment, final_arv_status=NAIVE."""
         self.row.update(
             today_hiv_result=POS,
             today_hiv_result_date=date(2016, 1, 7),

@@ -9,7 +9,8 @@ site_lab_profiles.autodiscover()
 site_mappers.autodiscover()
 admin.autodiscover()
 
-# site_mappers.get_current_mapper().verify_survey_dates()
+site_mappers.registry['digawana'] = {}
+site_mappers.get_current_mapper().verify_survey_dates()
 
 APP_NAME = 'bcpp_export'
 

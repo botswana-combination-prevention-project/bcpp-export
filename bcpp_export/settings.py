@@ -89,17 +89,15 @@ elif 'test' in sys.argv:  # TRAVIS
 
 else:
     # if remote, ssh -f -N -L 10000:127.0.0.1:3306 django@edc.bhp.org.bw
+    PATH = Path(os.path.dirname(os.path.realpath(__file__))).ancestor(2).child('etc')
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
             'OPTIONS': {
-                'init_command': 'SET storage_engine=INNODB',
+                'read_default_file': os.path.join(PATH, 'default.cnf'),
             },
-            'NAME': 'bhp066_master',
-            'USER': 'root',
-            'PASSWORD': 'cc3721b',
-            'HOST': '127.0.0.1',
-            'PORT': '10000',
+            'HOST': '',
+            'PORT': '',
             'ATOMIC_REQUESTS': True,
         },
     }

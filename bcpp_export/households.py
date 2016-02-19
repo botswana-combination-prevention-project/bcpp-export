@@ -1,21 +1,16 @@
 import pandas as pd
-import numpy as np
 import os
-
-from dateutil.relativedelta import relativedelta
-
-from django.utils import timezone
 
 from bcpp_export import urls
 from bcpp_export.subjects import Subjects
 
-from bhp066.apps.bcpp_household.models import Household, HouseholdStructure, Plot
+from bhp066.apps.bcpp_household.models import HouseholdStructure, Plot
 
 from bhp066.apps.bcpp_household_member.models.household_member import HouseholdMember
 
-from .constants import (YES, NO, DEFAULTER, DWTA, IND, NAIVE, NEG, NOT_APPLICABLE, ON_ART,
-                        POS, UNK, gender, hiv_options, tf, yes_no, edc_NOT_APPLICABLE)
-from bcpp_export.constants import survival
+from .communities import communities
+from .constants import (YES, NO, gender, yes_no, edc_NOT_APPLICABLE, survival)
+
 
 PLOT_IDENTIFIER = 'plot_identifier'
 
@@ -27,8 +22,11 @@ class Households(object):
         self._plots = pd.DataFrame()
         self._members = pd.DataFrame()
         self._households = pd.DataFrame()
+        self._df_households = pd.DataFrame()
         self.survey_name = survey_name
         self.subjects = Subjects(self.survey_name, merge_subjects_on, add_identity256).results
+        self.merge_dataframes()
+        self.add_derived_columns()
 
     def to_csv(self, dataset_name, path=None, columns=None):
         for name in self.dataset_names(dataset_name):
@@ -54,9 +52,6 @@ class Households(object):
 
     @property
     def households(self):
-        if self._households.empty:
-            self.merge_dataframes()
-            self.add_derived_columns()
         return self._households
 
     @property
@@ -72,14 +67,25 @@ class Households(object):
             self.df_households, self.df_plots, how='left', on=PLOT_IDENTIFIER)
 
     def add_derived_columns(self):
-        self._households['enrolled'] = self.households.apply(lambda row: self.enrolled(row), axis=1)
-        self._plots['enrolled'] = self._plots.apply(lambda row: self.enrolled(row), axis=1)
+        self._households['enrolled'] = self._households.apply(
+            lambda row: self.enrolled(row, 'household_identifier'), axis=1)
+        self._households['intervention'] = self._households.apply(
+            lambda row: self.intervention(row), axis=1)
+        self._households['pair'] = self._households.apply(
+            lambda row: communities.get(row['community']).pair, axis=1)
+        self._plots['enrolled'] = self._plots.apply(lambda row: self.enrolled(row, 'plot_identifier'), axis=1)
+        self._plots['intervention'] = self._plots.apply(
+            lambda row: self.intervention(row), axis=1)
+        self._plots['pair'] = self._plots.apply(
+            lambda row: communities.get(row['community']).pair, axis=1)
 
-    def enrolled(self, row):
-        df = self.subjects
-        if not df[df[PLOT_IDENTIFIER] == row[PLOT_IDENTIFIER]].plot_identifier.empty:
-            return YES
-        return NO
+    def intervention(self, row):
+        return 1 if communities.get(row['community']).intervention else 0
+
+    def enrolled(self, row, field):
+        if self.subjects[self.subjects[field].isin([row[field]])].empty:
+            return NO
+        return YES
 
     @property
     def df_plots(self):
@@ -89,27 +95,28 @@ class Households(object):
             df = pd.DataFrame(list(qs), columns=columns)
             self._plots = df.rename(columns={
                 'modified': 'plot_modified',
-                'action': 'confirmed'})
+                'action': 'confirmed',
+                'status': 'plot_status'})
             self._plots['confirmed'] = self._plots['confirmed'].map({'confirmed': 1, 'unconfirmed': 0}.get)
         return self._plots
 
     @property
     def df_households(self):
         """Return a dataframe of a selection of the household values."""
-        if self._households.empty:
+        if self._df_households.empty:
             columns = [
                 'household__household_identifier',
                 'household__plot__plot_identifier', 'survey__survey_slug', 'modified']
             qs = HouseholdStructure.objects.values_list(*columns).filter(
                 survey__survey_slug=self.survey_name).exclude(household__plot__status='bcpp_clinic')
             df = pd.DataFrame(list(qs), columns=columns)
-            self._households = df.rename(columns={
+            self._df_households = df.rename(columns={
                 'household__household_identifier': 'household_identifier',
                 'household__plot__plot_identifier': PLOT_IDENTIFIER,
                 'modified': 'household_modified',
                 'survey__survey_slug': 'survey',
             })
-        return self._households
+        return self._df_households
 
     @property
     def df_members(self):

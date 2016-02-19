@@ -28,15 +28,16 @@ class Households(object):
         self.merge_dataframes()
         self.add_derived_columns()
 
-    def to_csv(self, dataset_name, path=None, columns=None):
-        columns = columns or {}
+    def to_csv(self, dataset_name, **kwargs):
+        columns = kwargs.get('columns', {})
         for name in self.dataset_names(dataset_name):
             df = getattr(self, name)
             options = dict(
-                path_or_buf=os.path.expanduser(path or '~/bcpp_export_{}.csv'.format(name)),
+                path_or_buf=os.path.expanduser(kwargs.get('path_or_buf') or '~/bcpp_export_{}.csv'.format(name)),
                 na_rep='',
                 encoding='utf8',
-                date_format='%Y-%m-%d %H:%M:%S',
+                date_format=kwargs.get('date_format', '%Y-%m-%d %H:%M:%S'),
+                index=kwargs.get('index', True),
                 columns=columns.get(name))
             df.to_csv(**options)
 

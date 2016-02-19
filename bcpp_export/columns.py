@@ -23,7 +23,6 @@ columns = {
         'subject_identifier',
         'survey',
         'timestamp',
-        'vl_drawn_date'
     ],
     'members': [
         'able_to_participate',

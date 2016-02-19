@@ -89,10 +89,6 @@ Using the CSV files created above, select only those rows from the intervention 
     ~/bcpp_export_members_cpc_1-13.csv
     ~/bcpp_export_subjects_cpc_1-13.csv
 
-### Export a subset of columns.
-
-
-
 
 ### Households enumerated but not enrolled
 

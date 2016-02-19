@@ -57,39 +57,40 @@ or write all in one call
 
 ### Select data just for CPC communities from pairs 1 to 13
 
+Using the CSV files created above, select only those rows from the intervention (CPC) communities in pairs 1-13.
+
     import os
     import pandas as pd
 
-    communities = [
-        'digawana', 'lentsweletau', 'lerala', 'maunatlala', 'mmankgodi', 'oodi', 'otse', 'shoshong', 'tati_siding',
-        'nkange', 'mathangwane', 'gweta', 'gumare']
-    
     options = dict(
-        path_or_buf=os.path.expanduser('~/bcpp_export_{}.csv'.format(name)),
         na_rep='',
         encoding='utf8',
         date_format='%Y-%m-%d %H:%M')
 
-    name = 'plots_cpc_1-13'
-    df = pd.read_csv('~/bcpp_export_plots.csv')
-    df1 = df[df['community'].isin(communities)]
-    df1.to_csv(**options)
+    dataset_names = ['plots', 'households', 'members', 'subjects']
 
-    name = 'households_cpc-1-13'
-    options.update(path_or_buf=os.path.expanduser('~/bcpp_export_{}.csv'.format(name)))
-    df = pd.read_csv('~/bcpp_export_households.csv')
-    df1 = df[df['community'].isin(communities)]
-    df1.to_csv(**options)
-
-    name = 'members_cpc-1-13'
-    options.update(path_or_buf=os.path.expanduser('~/bcpp_export_{}.csv'.format(name)))
-    df = pd.read_csv('~/bcpp_export_members.csv')
-    df1 = df[df['community'].isin(communities)]
-    df1.to_csv(**options)
-
-    name = 'subjects_cpc-1-13'
-    options.update(path_or_buf=os.path.expanduser('~/bcpp_export_{}.csv'.format(name)))
-    df = pd.read_csv('~/bcpp_export_subjects.csv')
-    df1 = df[df['community'].isin(communities)]
-    df1.to_csv(**options)
+    for dataset_name in dataset_names:
+        df = pd.read_csv(os.path.expanduser('~/bcpp_export_{}.csv'.format(dataset_name))
+        df1 = df[(df['pair'] <= 13) & (df['intervention'] == 1)]
+        name = '{}_cpc_1-13'.format(dataset_name)
+        path_or_buf=os.path.expanduser('~/bcpp_export_{}_cpc_1-13.csv'.format(dataset_name))
+        df1.to_csv(path_or_buf=path_or_buf, **options)
         
+... creates:
+
+    ~/bcpp_export_plots_cpc_1-13.csv
+    ~/bcpp_export_households_cpc_1-13.csv
+    ~/bcpp_export_members_cpc_1-13.csv
+    ~/bcpp_export_subjects_cpc_1-13.csv
+
+
+### Households enumerated but not enrolled
+
+    df = pd.read_csv(os.path.expanduser('~/bcpp_export_households.csv')
+    df[(df['enrolled'] == 0) & (df['enumerated'] == 1)].count()
+
+### Households enumerated and enrolled
+
+    df = pd.read_csv(os.path.expanduser('~/bcpp_export_households.csv')
+    df[(df['enrolled'] == 1) & (df['enumerated'] == 1)].count()  # same as just enrolled
+    

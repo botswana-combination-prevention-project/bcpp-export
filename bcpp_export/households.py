@@ -67,6 +67,8 @@ class Households(object):
             self.df_households, self.df_plots, how='left', on=PLOT_IDENTIFIER)
 
     def add_derived_columns(self):
+        self._households['enumerated'] = self._households.apply(
+            lambda row: self.enumerated(row), axis=1)
         self._households['enrolled'] = self._households.apply(
             lambda row: self.enrolled(row, 'household_identifier'), axis=1)
         self._households['intervention'] = self._households.apply(
@@ -78,9 +80,20 @@ class Households(object):
             lambda row: self.intervention(row), axis=1)
         self._plots['pair'] = self._plots.apply(
             lambda row: communities.get(row['community']).pair, axis=1)
+        self._members['intervention'] = self._members.apply(
+            lambda row: self.intervention(row), axis=1)
+        self._members['pair'] = self._members.apply(
+            lambda row: communities.get(row['community']).pair, axis=1)
+        self._members['enrolled'] = self._members.apply(
+            lambda row: self.enrolled(row, 'registered_subject'), axis=1)
 
     def intervention(self, row):
         return 1 if communities.get(row['community']).intervention else 0
+
+    def enumerated(self, row):
+        if self.members[self.members['household_identifier'].isin([row['household_identifier']])].empty:
+            return NO
+        return YES
 
     def enrolled(self, row, field):
         if self.subjects[self.subjects[field].isin([row[field]])].empty:
@@ -125,7 +138,7 @@ class Households(object):
                 'registered_subject', 'gender', 'age_in_years', 'survival_status', 'study_resident',
                 'household_structure__household__household_identifier',
                 'household_structure__household__plot__plot_identifier',
-                'household_structure__household__plot__plot__community',
+                'household_structure__household__plot__community',
                 'household_structure__survey__survey_slug',
                 'inability_to_participate', 'modified',
             ]
@@ -136,7 +149,7 @@ class Households(object):
             self._members = df.rename(columns={
                 'household_structure__household__household_identifier': 'household_identifier',
                 'household_structure__household__plot__plot_identifier': PLOT_IDENTIFIER,
-                'household_structure__household__plot__plot__community': 'community',
+                'household_structure__household__plot__community': 'community',
                 'household_structure__survey__survey_slug': 'survey',
                 'inability_to_participate': 'able_to_participate',
                 'modified': 'member_modified',

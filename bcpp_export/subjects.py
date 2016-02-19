@@ -119,7 +119,10 @@ class Subjects(object):
                 lambda row: getattr(DerivedVariables(row), attrname), axis=1)
 
     def datetime_to_date(self, value):
-        return value.date() if pd.notnull(value) else value
+        if pd.notnull(value):
+            return value.date()
+        else:
+            return value
 
     @property
     def df_subject_consents(self):
@@ -135,8 +138,11 @@ class Subjects(object):
                 'household_member_id': HOUSEHOLD_MEMBER,
                 'id': 'consent',
                 'legal_marriage': 'spouse_of_citizen',
-                'registered_subject_id': 'registered_subject'
+                'registered_subject_id': 'registered_subject',
+                'consent_datetime': 'consent_date',
             })
+            self._subject_consents['consent_date'] = self._subject_consents.apply(
+                lambda row: self.datetime_to_date(row['consent_date']), axis=1)
         return self._subject_consents
 
     @property
@@ -170,8 +176,10 @@ class Subjects(object):
                 'subject_visit__household_member__registered_subject__subject_identifier': SUBJECT_IDENTIFIER,
                 'subject_visit__household_member': HOUSEHOLD_MEMBER,
                 'subject_referred': 'referred',
-                'vl_sample_drawn_datetime': 'vl_drawn_datetime',
+                'vl_sample_drawn_datetime': 'vl_drawn_date',
             })
+            self._subject_referrals['vl_drawn_date'] = self._subject_referrals.apply(
+                lambda row: self.datetime_to_date(row['vl_drawn_date']), axis=1)
         return self._subject_referrals
 
     @property
@@ -336,40 +344,3 @@ class Subjects(object):
             self._subject_pimas['cd4_date'] = self._subject_pimas.apply(
                 lambda row: self.datetime_to_date(row['cd4_date']), axis=1)
         return self._subject_pimas
-
-    def derived_fields(self):
-        """Not used"""
-        return [
-            'vl_assay_datetime',
-            'vl_result'
-            'vl_sample_drawn',
-        ]
-
-    @property
-    def export_columns(self):
-        return [
-            'age_in_years',
-            'arv_clinic',
-            'cd4_date',
-            'cd4_tested',
-            'cd4_value',
-            'circumcised',
-            'community',
-            'consent_date',
-            'final_arv_status',
-            'final_hiv_status',
-            'gender',
-            'identity',
-            'location',
-            'pregnant',
-            'prev_result',
-            'prev_result_date',
-            'prev_result_known',
-            'referral_code',
-            'referred',
-            'self_reported_result',
-            'subject_identifier',
-            'survey',
-            'timestamp',
-            'vl_drawn_date',
-        ]

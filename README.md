@@ -57,7 +57,7 @@ or write all and limit the columns exported as defined in a dictionary like the 
 
     from bcpp_export.columns import columns
     
-    h.to_csv('all', columns=columns)  # creates all CSV files listed above
+    h.to_csv('all', columns=columns, index=False)  # creates all CSV files listed above
 
 ## Examples
 
@@ -118,3 +118,12 @@ Using the CSV files created above, select only those rows from the intervention 
         date_format='%Y-%m-%d %H:%M:%S',
         path_or_buf=os.path.expanduser('~/bcpp_export_subject_cpc_1-13.csv'))
     df1.to_csv(**options)
+    
+    # or directly on the household class from above (h)
+    
+    vl = pd.read_csv('~/Downloads/Viral_Load_ids.csv')
+    vl['vl_drawn'] = vl.apply(lambda row: 1, axis=1)
+    h.subjects = pd.merge(h.subjects, vl, how='left', on='subject_identifier')    
+    h.subjects['vl_drawn'] = h.subjects.apply(
+        lambda row: 0 if row['final_hiv_status'] == 1 and pd.isnull(row['vl_drawn']) else row['vl_drawn'], axis=1)
+    h.to_csv('subjects', columns=columns, index=False)

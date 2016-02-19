@@ -86,6 +86,10 @@ class Households(object):
             lambda row: communities.get(row['community']).pair, axis=1)
         self._members['enrolled'] = self._members.apply(
             lambda row: self.enrolled(row, 'registered_subject'), axis=1)
+        self.subjects['pair'] = self.subjects.apply(
+            lambda row: communities.get(row['community']).pair, axis=1)
+        self.subjects['intervention'] = self.subjects.apply(
+            lambda row: self.intervention(row), axis=1)
 
     def intervention(self, row):
         return 1 if communities.get(row['community']).intervention else 0
@@ -103,7 +107,8 @@ class Households(object):
     @property
     def df_plots(self):
         if self._plots.empty:
-            columns = [PLOT_IDENTIFIER, 'gps_lat', 'gps_lon', 'action', 'status', 'selected', 'community', 'modified']
+            columns = [PLOT_IDENTIFIER, 'gps_lat', 'gps_lon', 'action', 'status', 'selected',
+                       'community', 'modified']
             qs = Plot.objects.values_list(*columns).exclude(status='bcpp_clinic')
             df = pd.DataFrame(list(qs), columns=columns)
             self._plots = df.rename(columns={

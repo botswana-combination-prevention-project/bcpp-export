@@ -29,14 +29,16 @@ class Households(object):
         self.add_derived_columns()
 
     def to_csv(self, dataset_name, path=None, columns=None):
+        columns = columns or {}
         for name in self.dataset_names(dataset_name):
             df = getattr(self, name)
-            df.to_csv(
+            options = dict(
                 path_or_buf=os.path.expanduser(path or '~/bcpp_export_{}.csv'.format(name)),
                 na_rep='',
                 encoding='utf8',
                 date_format='%Y-%m-%d %H:%M',
-                cols=columns)
+                cols=columns.get(name))
+            df.to_csv(**options)
 
     def dataset_names(self, dataset_name):
         """Return the dataset_name(s) to export as a list or if dataset_name == all return a

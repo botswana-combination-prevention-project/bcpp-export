@@ -51,7 +51,13 @@ write each dataframe to csv individually
     
 or write all in one call
 
-    h.to_csv('all')  # creates all listed above
+    h.to_csv('all')  # creates all CSV files listed above
+
+or write all and limit the columns exported as defined in a dictionary like the one in `bcpp_export.columns`:
+
+    from bcpp_export.columns import columns
+    
+    h.to_csv('all', columns=columns)  # creates all CSV files listed above
 
 ## Examples
 

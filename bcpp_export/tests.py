@@ -15,7 +15,7 @@ class TestSubject(TestCase):
     def setUp(self):
         self.row = {
             SUBJECT_IDENTIFIER: '111111111-1',
-            'consent_datetime': datetime(2016, 1, 15),
+            'consent_date': date(2016, 1, 15),
             'dob': datetime(1992, 1, 15),
             'arv_evidence': None,
             'elisa_hiv_result': None,

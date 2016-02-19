@@ -70,7 +70,7 @@ Using the CSV files created above, select only those rows from the intervention 
     dataset_names = ['plots', 'households', 'members', 'subjects']
 
     for dataset_name in dataset_names:
-        df = pd.read_csv(os.path.expanduser('~/bcpp_export_{}.csv'.format(dataset_name))
+        df = pd.read_csv(os.path.expanduser('~/bcpp_export_{}.csv'.format(dataset_name)))
         df1 = df[(df['pair'] <= 13) & (df['intervention'] == 1)]
         name = '{}_cpc_1-13'.format(dataset_name)
         path_or_buf=os.path.expanduser('~/bcpp_export_{}_cpc_1-13.csv'.format(dataset_name))
@@ -83,14 +83,22 @@ Using the CSV files created above, select only those rows from the intervention 
     ~/bcpp_export_members_cpc_1-13.csv
     ~/bcpp_export_subjects_cpc_1-13.csv
 
+### Export a subset of columns.
+
+
+
 
 ### Households enumerated but not enrolled
 
+    from bcpp_export.constants impot YES, NO
+
     df = pd.read_csv(os.path.expanduser('~/bcpp_export_households.csv')
-    df[(df['enrolled'] == 0) & (df['enumerated'] == 1)].count()
+    df[(df['enrolled'] == NO) & (df['enumerated'] == YES)].count()
 
 ### Households enumerated and enrolled
 
+    from bcpp_export.constants impot YES, NO
+
     df = pd.read_csv(os.path.expanduser('~/bcpp_export_households.csv')
-    df[(df['enrolled'] == 1) & (df['enumerated'] == 1)].count()  # same as just enrolled
+    df[(df['enrolled'] == YES) & (df['enumerated'] == YES)].count()  # same as just enrolled
     

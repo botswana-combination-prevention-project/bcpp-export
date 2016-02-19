@@ -36,7 +36,7 @@ class DerivedVariables(object):
         self.identity = row['identity']
         if self.result_recorded_document == edc_ART_PRESCRIPTION:
             self.arv_evidence = YES
-        self.age_in_years = relativedelta(row['consent_datetime'].date(), row['dob']).years
+        self.age_in_years = relativedelta(row['consent_date'], row['dob']).years
         self.timestamp = timezone.now()
         self.final_hiv_status = np.nan
         self.final_hiv_date = np.nan

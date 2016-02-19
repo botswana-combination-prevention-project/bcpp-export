@@ -37,7 +37,7 @@ class Households(object):
                 na_rep='',
                 encoding='utf8',
                 date_format='%Y-%m-%d %H:%M',
-                cols=columns.get(name))
+                columns=columns.get(name))
             df.to_csv(**options)
 
     def dataset_names(self, dataset_name):

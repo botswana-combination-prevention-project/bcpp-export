@@ -1,5 +1,4 @@
 
-
 columns = {
     'subjects': [
         'age_in_years',
@@ -33,20 +32,14 @@ columns = {
         'enrolled',
         'gender',
         'household_identifier',
-        'member_modified',
         'plot_identifier',
-        'registered_subject',
-        'study_resident',
         'survey',
-        'survival_status',
     ],
     'households': [
         'community',
-        'confirmed',
         'enrolled',
         'enumerated',
         'household_identifier',
-        'household_modified',
         'plot_identifier',
         'survey',
     ],
@@ -55,8 +48,6 @@ columns = {
         'confirmed',
         'enrolled',
         'plot_identifier',
-        'plot_modified',
         'plot_status',
-        'selected',
     ],
 }

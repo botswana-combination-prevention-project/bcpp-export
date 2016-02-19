@@ -71,7 +71,7 @@ Using the CSV files created above, select only those rows from the intervention 
     options = dict(
         na_rep='',
         encoding='utf8',
-        date_format='%Y-%m-%d %H:%M')
+        date_format='%Y-%m-%d %H:%M:%S')
 
     dataset_names = ['plots', 'households', 'members', 'subjects']
 
@@ -108,3 +108,17 @@ Using the CSV files created above, select only those rows from the intervention 
     df = pd.read_csv(os.path.expanduser('~/bcpp_export_households.csv')
     df[(df['enrolled'] == YES) & (df['enumerated'] == YES)].count()  # same as just enrolled
     
+### Add column based on external viral load data
+
+    import pandas as pd
+ 
+    df = pd.read_csv(os.path.expanduser('~/bcpp_export_subject_cpc_1-13.csv')
+    vl = pd.read_csv('~/Downloads/Viral_Load_ids.csv')
+    vl['vl_drawn'] = vl.apply(lambda row: 1, axis=1)
+    df1 = pd.merge(df, vl, how='left', on='subject_identifier')
+    options = dict(
+        na_rep='',
+        encoding='utf8',
+        date_format='%Y-%m-%d %H:%M:%S',
+        path_or_buf=os.path.expanduser('~/bcpp_export_subject_cpc_1-13.csv'))
+    df1.to_csv(**options)

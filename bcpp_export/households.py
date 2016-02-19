@@ -36,7 +36,7 @@ class Households(object):
                 path_or_buf=os.path.expanduser(path or '~/bcpp_export_{}.csv'.format(name)),
                 na_rep='',
                 encoding='utf8',
-                date_format='%Y-%m-%d %H:%M',
+                date_format='%Y-%m-%d %H:%M:%S',
                 columns=columns.get(name))
             df.to_csv(**options)
 

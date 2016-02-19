@@ -60,8 +60,8 @@ class Subjects(object):
             path_or_buf=os.path.expanduser(path or '~/bcpp_export_subjects.csv'),
             na_rep='',
             encoding='utf8',
-            date_format='%Y-%m-%d %H:%M',
-            cols=columns or self.export_columns)
+            date_format='%Y-%m-%d %H:%M:%S',
+            columns=columns)
 
     def merge_dataframes(self):
         """Left Merge all dataframes starting with subject_consent into

@@ -217,8 +217,9 @@ class Subjects(object):
                 'subject_visit__household_member': HOUSEHOLD_MEMBER,
                 'hiv_result': 'elisa_hiv_result',
                 'hiv_result_datetime': 'elisa_hiv_result_date'})
-            self._elisa_hiv_result['elisa_hiv_result_date'] = self._elisa_hiv_result.apply(
-                lambda row: self.datetime_to_date(row['elisa_hiv_result_date']), axis=1)
+            if not self._elisa_hiv_result.empty:
+                self._elisa_hiv_result['elisa_hiv_result_date'] = self._elisa_hiv_result.apply(
+                    lambda row: self.datetime_to_date(row['elisa_hiv_result_date']), axis=1)
         return self._elisa_hiv_result
 
     @property

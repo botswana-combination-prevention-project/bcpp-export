@@ -18,6 +18,7 @@ columns = {
         'prev_result',
         'prev_result_date',
         'prev_result_known',
+        'registered_subject',
         'referred',
         'self_reported_result',
         'subject_identifier',
@@ -32,6 +33,7 @@ columns = {
         'gender',
         'household_identifier',
         'plot_identifier',
+        'registered_subject',
         'survey',
     ],
     'households': [

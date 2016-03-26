@@ -1,14 +1,17 @@
 import pandas as pd
 import os
 
-from bcpp_export import urls
+from bcpp_export import urls  # DO NOT DELETE
+
 from bhp066.apps.bcpp_subject.models import (
     SubjectReferral, SubjectConsent, Circumcision, ElisaHivResult, HivCareAdherence, HivResult,
     HivResultDocumentation, HivTestReview, HivTestingHistory, Pima, ReproductiveHealth,
     ResidencyMobility)
 
-from .constants import gender, hiv_options, tf, yes_no, SUBJECT_IDENTIFIER, HOUSEHOLD_MEMBER
-from .derived_vars import DerivedVariables
+from ..constants import gender, hiv_options, tf, yes_no, SUBJECT_IDENTIFIER, HOUSEHOLD_MEMBER
+from ..datetime_to_date import datetime_to_date
+from ..derived_variables import DerivedVariables
+from bcpp_export.constants import PLOT_IDENTIFIER
 
 
 class Subjects(object):
@@ -111,18 +114,14 @@ class Subjects(object):
             'prev_result',
             'prev_result_date',
             'prev_result_known',
+            'pair',
+            'intervention',
         ]
         if self.add_identity256:
             attrnames.append('identity256')
         for attrname in attrnames:
             self._results[attrname] = self._results.apply(
                 lambda row: getattr(DerivedVariables(row), attrname), axis=1)
-
-    def datetime_to_date(self, value):
-        if pd.notnull(value):
-            return value.date()
-        else:
-            return value
 
     @property
     def df_subject_consents(self):
@@ -142,22 +141,29 @@ class Subjects(object):
                 'consent_datetime': 'consent_date',
             })
             self._subject_consents['consent_date'] = self._subject_consents.apply(
-                lambda row: self.datetime_to_date(row['consent_date']), axis=1)
+                lambda row: datetime_to_date(row['consent_date']), axis=1)
         return self._subject_consents
 
     @property
     def df_subject_households(self):
         """Return a dataframe of the subject's household and plot identifier."""
         if self._subject_households.empty:
-            qs = SubjectConsent.objects.values_list(
+            columns = [
                 SUBJECT_IDENTIFIER, HOUSEHOLD_MEMBER,
+                'household_member__household_structure',
                 'household_member__household_structure__household__household_identifier',
                 'household_member__household_structure__household__plot__plot_identifier',
-                'household_member__household_structure__survey__survey_slug').filter(
-                    household_member__household_structure__survey__survey_slug=self.survey_name)
-            self._subject_households = pd.DataFrame(
-                list(qs), columns=[
-                    SUBJECT_IDENTIFIER, HOUSEHOLD_MEMBER, 'household_identifier', 'plot_identifier', 'survey'])
+                'household_member__household_structure__survey__survey_slug']
+            qs = SubjectConsent.objects.values_list(*columns).filter(
+                household_member__household_structure__survey__survey_slug=self.survey_name).exclude(
+                household_member__household_structure__household__plot__status='bcpp_clinic')
+            df = pd.DataFrame(list(qs), columns=columns)
+            df = df.rename(columns={
+                'household_member__household_structure': 'household_structure',
+                'household_member__household_structure__household__household_identifier': 'household_identifier',
+                'household_member__household_structure__household__plot__plot_identifier': PLOT_IDENTIFIER,
+                'household_member__household_structure__survey__survey_slug': 'survey'})
+            self._subject_households = df
         return self._subject_households
 
     @property
@@ -179,7 +185,7 @@ class Subjects(object):
                 'vl_sample_drawn_datetime': 'vl_drawn_date',
             })
             self._subject_referrals['vl_drawn_date'] = self._subject_referrals.apply(
-                lambda row: self.datetime_to_date(row['vl_drawn_date']), axis=1)
+                lambda row: datetime_to_date(row['vl_drawn_date']), axis=1)
         return self._subject_referrals
 
     @property
@@ -199,7 +205,7 @@ class Subjects(object):
                 'hiv_result_datetime': 'today_hiv_result_date',
                 'why_not_tested': 'reason_not_tested_today'})
             self._today_hiv_result['today_hiv_result_date'] = self._today_hiv_result.apply(
-                lambda row: self.datetime_to_date(row['today_hiv_result_date']), axis=1)
+                lambda row: datetime_to_date(row['today_hiv_result_date']), axis=1)
         return self._today_hiv_result
 
     @property
@@ -219,7 +225,7 @@ class Subjects(object):
                 'hiv_result_datetime': 'elisa_hiv_result_date'})
             if not self._elisa_hiv_result.empty:
                 self._elisa_hiv_result['elisa_hiv_result_date'] = self._elisa_hiv_result.apply(
-                    lambda row: self.datetime_to_date(row['elisa_hiv_result_date']), axis=1)
+                    lambda row: datetime_to_date(row['elisa_hiv_result_date']), axis=1)
         return self._elisa_hiv_result
 
     @property
@@ -274,7 +280,8 @@ class Subjects(object):
         if self._hiv_care_adherence.empty:
             columns = ['subject_visit__household_member__registered_subject__subject_identifier',
                        'subject_visit__household_member',
-                       'ever_taken_arv', 'on_arv', 'arv_evidence']
+                       'ever_taken_arv', 'on_arv', 'arv_evidence',
+                       'clinic_receiving_from']
             qs = HivCareAdherence.objects.values_list(*columns).filter(
                 subject_visit__household_member__household_structure__survey__survey_slug=self.survey_name)
             df = pd.DataFrame(list(qs), columns=columns)
@@ -343,5 +350,5 @@ class Subjects(object):
                 'pima_today_other': 'cd4_not_tested_reason',
                 'cd4_datetime': 'cd4_date'})
             self._subject_pimas['cd4_date'] = self._subject_pimas.apply(
-                lambda row: self.datetime_to_date(row['cd4_date']), axis=1)
+                lambda row: datetime_to_date(row['cd4_date']), axis=1)
         return self._subject_pimas

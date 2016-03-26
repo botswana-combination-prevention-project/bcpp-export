@@ -1,3 +1,6 @@
+import pandas as pd
+import numpy as np
+
 from collections import namedtuple
 
 Community = namedtuple('Community', 'code name pair intervention')
@@ -34,3 +37,10 @@ communities = {
     'tati_siding': Community('30', 'tati_siding', 9, True),
     'tsetsebjwe': Community('40', 'tsetsebjwe', 14, False)
 }
+
+
+def intervention(row):
+    """Return 1 for intervention communities, otherwise 0."""
+    if pd.isnull(row['community']):
+        return np.nan
+    return 1 if communities.get(row['community']).intervention else 0

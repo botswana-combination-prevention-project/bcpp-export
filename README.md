@@ -38,9 +38,9 @@ The dataframes are passed `django` model `values_list`. Encrypted field values (
     
 ### Usage
     
-    from bcpp_export.subjects import Households
+    from bcpp_export.households import Households
     
-    h = Households('bcpp-year-1', merge_on='household_member', add_identity256=True)
+    h = Households('bcpp-year-1', merge_subjects_on='household_member', add_identity256=True)
 
 write each dataframe to csv individually
 
@@ -93,7 +93,7 @@ Using the CSV files created above, select only those rows from the intervention 
 
 ### Households enumerated but not enrolled
 
-    from bcpp_export.constants impot YES, NO
+    from bcpp_export.constants import YES, NO
 
     df = pd.read_csv(os.path.expanduser('~/bcpp_export_households.csv')
     df[(df['enrolled'] == NO) & (df['enumerated'] == YES)].count()

@@ -11,6 +11,7 @@ geo-utils
 geopy
 numpy
 pandas
+numexpr
 python-dateutil
 pytz
 git+https://github.com/erikvw/django-crypto-fields@master#egg=django_crypto_fields

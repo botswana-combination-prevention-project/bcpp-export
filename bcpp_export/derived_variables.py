@@ -1,14 +1,16 @@
 import hashlib
 import numpy as np
 import pandas as pd
-import re
 
 from dateutil.relativedelta import relativedelta
+from django.core.exceptions import ImproperlyConfigured
 from django.utils import timezone
 from edc.core.crypto_fields.classes import FieldCryptor
 
-from .constants import (YES, NO, DEFAULTER, NAIVE, NEG, ON_ART, POS, UNK, SUBJECT_IDENTIFIER, edc_ART_PRESCRIPTION)
-from django.core.exceptions import ImproperlyConfigured
+from .constants import (YES, NO, DEFAULTER, NAIVE, NEG, ON_ART, POS, UNK,
+                        SUBJECT_IDENTIFIER, edc_ART_PRESCRIPTION)
+from .communities import communities, intervention
+from .identity256 import identity256
 
 
 class DerivedVariables(object):
@@ -19,21 +21,23 @@ class DerivedVariables(object):
         self._identity256 = np.nan
         self.subject_identifier = row[SUBJECT_IDENTIFIER]
         self.arv_evidence = row['arv_evidence']
+        self.elisa_hiv_result = row['elisa_hiv_result']
+        self.elisa_hiv_result_date = row['elisa_hiv_result_date']
         self.ever_taken_arv = row['ever_taken_arv']
         self.has_tested = row['has_tested']
+        self.identity = row['identity']
+        self.intervention = intervention(row)
         self.on_arv = row['on_arv']
         self.other_record = row['other_record']
+        self.pair = communities.get(row['community']).pair
         self.recorded_hiv_result = row['recorded_hiv_result']
         self.recorded_hiv_result_date = row['recorded_hiv_result_date']
         self.result_recorded = row['result_recorded']
         self.result_recorded_date = row['result_recorded_date']
+        self.result_recorded_document = row['result_recorded_document']
         self.self_reported_result = row['self_reported_result']
         self.today_hiv_result = row['today_hiv_result']
         self.today_hiv_result_date = row['today_hiv_result_date']
-        self.elisa_hiv_result = row['elisa_hiv_result']
-        self.elisa_hiv_result_date = row['elisa_hiv_result_date']
-        self.result_recorded_document = row['result_recorded_document']
-        self.identity = row['identity']
         if self.result_recorded_document == edc_ART_PRESCRIPTION:
             self.arv_evidence = YES
         self.age_in_years = relativedelta(row['consent_date'], row['dob']).years
@@ -54,12 +58,14 @@ class DerivedVariables(object):
     @property
     def identity256(self):
         if pd.isnull(self._identity256):
-            field_cryptor = FieldCryptor('rsa', 'restricted')
-            identity = field_cryptor.decrypt(self.identity)
-            if identity.startswith('enc1::'):
-                raise ImproperlyConfigured(
-                    'Cannot decrypt identity, specify path to the encryption keys in settings.KEYPATH')
-            self._identity256 = hashlib.sha256(identity).digest().encode("hex")
+            self._identity256 = identity256({'identity': self.identity})
+#         if pd.isnull(self._identity256):
+#             field_cryptor = FieldCryptor('rsa', 'restricted')
+#             identity = field_cryptor.decrypt(self.identity)
+#             if identity.startswith('enc1::'):
+#                 raise ImproperlyConfigured(
+#                     'Cannot decrypt identity, specify path to the encryption keys in settings.KEYPATH')
+#             self._identity256 = hashlib.sha256(identity).digest().encode("hex")
         return self._identity256
 
     @property

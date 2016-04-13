@@ -38,9 +38,24 @@ communities = {
     'tsetsebjwe': Community('40', 'tsetsebjwe', 14, False)
 }
 
+communities_by_code = {}
+for name, community in communities.iteritems():
+    communities_by_code.update({community.code: community})
+
 
 def intervention(row):
     """Return 1 for intervention communities, otherwise 0."""
-    if pd.isnull(row['community']):
+    if pd.isnull(row['community']) or row['community'] not in communities:
         return np.nan
     return 1 if communities.get(row['community']).intervention else 0
+
+
+def pair(row):
+    if pd.isnull(row['community']) or row['community'] not in communities:
+        return np.nan
+    return communities.get(row['community']).pair
+
+
+def to_community(code):
+    return communities_by_code.get(code).name
+    

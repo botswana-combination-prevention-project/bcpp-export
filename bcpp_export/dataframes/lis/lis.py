@@ -5,6 +5,7 @@ import numpy as np
 from sqlalchemy import create_engine
 from tabulate import tabulate
 from bcpp_export import urls  # DO NOT DELETE
+from bcpp_export.undash import undash
 from bcpp_export.private_settings import Lis as LisCredentials
 from bcpp_export.dataframes.edc import ClinicConsent
 from bcpp_export.dataframes.edc.edc_requisition import Requisition
@@ -13,7 +14,8 @@ from bcpp_export.dataframes.edc.edc_registered_subject import RegisteredSubject
 
 class Lis(object):
 
-    def __init__(self, df=pd.DataFrame(), engine=None, protocol=None, protocol_prefix=None):
+    def __init__(self, df=pd.DataFrame(), engine=None, protocol=None,
+                 protocol_prefix=None, df_currentstudyparticipant=pd.DataFrame()):
         if not df.empty:
             self.results = df
         else:
@@ -29,24 +31,32 @@ class Lis(object):
             self.update_final_subject_identifier_from_lab_identifier()
             self.update_final_subject_identifier_from_htc_identifier()
             self.update_final_subject_identifier_from_requisitions()
+            self.update_final_subject_identifier_from_identity()
+            self.update_edc_specimen_identifier_from_requisition()
+            self.update_final_subject_identifier_from_cdc(df_currentstudyparticipant)
+            # self.update_edc_specimen_identifier_from_receive()
             self.update_requisition_columns()
 
     def print_df(self, df, headers):
         print(tabulate(df, headers=headers, tablefmt='psql'))
 
-    def unmatched_k(self, format=None):
+    def show_final_subject_identifier_source(self):
+        return self.results.groupby('final_subject_identifier_source').size()
+
+    def show_missing_subject_identifier_k_only(self, format=None):
         """show unmatched K numbers"""
-        columns = ['lis_identifier', 'received_datetime', 'subject_identifier', 'drawn_datetime']
+        columns = ['lis_identifier', 'received_datetime', 'subject_identifier', 'drawn_datetime',
+                   'result']
         df = self.results[
             (pd.isnull(self.results['final_subject_identifier'])) &
             (self.results['subject_identifier'].str.startswith('K'))]
         if format == 'dataframe':
-            return df
+            return df[columns].sort_values('subject_identifier')
         else:
             self.print_df(df[columns].sort_values('subject_identifier'),
                           ['received_as', 'received_on', 'subject_identifier', 'drawn'])
 
-    def missing_subject_identifier(self, format=None):
+    def show_missing_subject_identifier(self, format=None):
         columns = ['lis_identifier', 'received_datetime',
                    'subject_identifier', 'drawn_datetime', 'test_id', 'utestid', 'result']
         df = self.results[pd.isnull(self.results['final_subject_identifier'])]
@@ -60,7 +70,23 @@ class Lis(object):
                 'received_as', 'received_on', 'subject_identifier',
                 'drawn', 'test', 'testid', 'result'])
 
-    def fetch_results_as_dataframe(self):
+    def show_missing_edc_specimen_identifier(self, format=None):
+        df = self.results[
+            (pd.isnull(self.results['edc_specimen_identifier'])) &
+            (pd.notnull(self.results['final_subject_identifier']))][
+            ['final_subject_identifier', 'lis_identifier', 'received_datetime', 'test_id',
+             'drawn_datetime', 'result']]
+        df = df.sort_values('received_datetime')
+        df.drop_duplicates()
+        df.reset_index()
+        if format == 'dataframe':
+            return df
+        else:
+            self.print_df(df, headers=[
+                'subject_identifier', 'received_as', 'received_on', 'test',
+                'drawn', 'result'])
+
+    def fetch_results_as_dataframe(self, edc_panels=None):
         with self.engine.connect() as conn, conn.begin():
             df = pd.read_sql_query(self.sql_results, conn)
         df.fillna(value=np.nan, inplace=True)
@@ -71,15 +97,18 @@ class Lis(object):
         df['result'] = df.apply(
             lambda row: np.nan if row['result'] == '' else row['result'], axis=1)
         # df['result_float'] = df[df['result'].str.contains('\d+')]['result'].astype(float, na=False)
+        for column in list(df.select_dtypes(include=['datetime64[ns, UTC]']).columns):
+            df[column] = df[column].astype('datetime64[ns]')
         df['result_datetime'] = pd.to_datetime(df['result_datetime'])
         df['received_datetime'] = pd.to_datetime(df['received_datetime'])
         df['drawn_datetime'] = pd.to_datetime(df['drawn_datetime'])
-        # df['other_identifier'] = df.apply(lambda row: self.other_identifier(row), axis=1)
+        df['drawn_datetime'] = pd.to_datetime(df['drawn_datetime'].dt.date)
         df['specimen_identifier'] = df.apply(lambda row: np.nan if row['specimen_identifier'] == 'NA' else row['specimen_identifier'], axis=1)
         df['aliquot_identifier'] = df.apply(lambda row: self.aliquot_identifier(row), axis=1)
         df['edc_specimen_identifier'] = df.apply(lambda row: self.edc_specimen_identifier(row, self.protocol_prefix), axis=1)
-        df['subject_identifier'] = df.apply(lambda row: self.undash(row['subject_identifier'], '^{}-'.format(self.protocol_prefix)), axis=1)
+        df['subject_identifier'] = df.apply(lambda row: undash(row['subject_identifier'], '^{}-'.format(self.protocol_prefix)), axis=1)
         df['final_subject_identifier'] = df[df['subject_identifier'].str.startswith('{}-'.format(self.protocol_prefix))]['subject_identifier']
+        df['final_subject_identifier_source'] = df.apply(lambda row: np.nan if pd.isnull(row['final_subject_identifier']) else 'lis', axis=1)
         return df
 
     @property
@@ -95,46 +124,38 @@ class Lis(object):
         where sample_protocolnumber='BHP066'"""
 
     @property
-    def sql_storage(self):
-        return """SELECT L.pat_id as subject_identifier, l.sample_date_drawn as drawn_datetime,
-        sample_id as aliquot_identifier, sample_type, pid_name AS label, box_col, st505.pid AS box,
-        ST405.PID as RACK, ST305.PID as FREEZER,
-        FREEZER_NAME
-        FROM bhplab.dbo.st505responseQ001x0 AS st505d
-        LEFT join bhplab.dbo.st505response AS st505 ON st505D.qid1x0=st505.q001x0
-        LEFT join bhplab.dbo.st515response AS st515 ON st505d.sample_type=st515.pid
-        LEFT join bhplab.dbo.lab01response AS l ON st505d.sample_id=l.pid
-        left join BHPLAB.DBO.ST405ResponseQ001X0 as ST405D on ST505.PID=ST405D.BOX_ID
-        left join BHPLAB.DBO.ST405Response as ST405 on ST405.Q001X0=ST405D.QID1X0
-        left join BHPLAB.DBO.ST305ResponseQ001X0 as ST305D on ST405.PID=ST305D.RACK_ID
-        left join BHPLAB.DBO.ST305Response as ST305 on ST305.Q001X0=ST305D.QID1X0
-        WHERE l.sample_protocolnumber='{}'""".format(self.protocol)
-
-    @property
     def sql_getresults(self):
         return """SELECT * FROM "getresults_dst_history"""
 
     def update_final_subject_identifier_from_lab_identifier(self):
-        # match to lab_identifier
+        """Matches lab_identifier from clinic consent to lis.subject_identifier."""
         df = pd.merge(self.results[pd.isnull(self.results['final_subject_identifier'])],
                       self.df_clinic_consent[['subject_identifier', 'lab_identifier']],
                       left_on='subject_identifier',
                       right_on='lab_identifier',
                       suffixes=['', '_edc'])[['subject_identifier', 'subject_identifier_edc']]
+        df.rename(columns={'subject_identifier_edc': 'final_subject_identifier'}, inplace=True)
+        df['final_subject_identifier_source'] = 'clinic_consent (lab id)'
         df.drop_duplicates(inplace=True)
-        self.results = pd.merge(self.results, df, on='subject_identifier', how='left')
-        self.update_final_subject_identifier()
+        df.set_index('subject_identifier', inplace=True)
+        self.results.set_index('subject_identifier', inplace=True)
+        self.results = self.results.combine_first(df)
+        self.results.reset_index(inplace=True)
 
     def update_final_subject_identifier_from_htc_identifier(self):
-        # match to htc_identifier
+        """Matches htc_identifier from clinic consent to lis.subject_identifier."""
         df = pd.merge(self.results[pd.isnull(self.results['final_subject_identifier'])],
                       self.df_clinic_consent[['subject_identifier', 'htc_identifier']],
                       left_on='subject_identifier',
                       right_on='htc_identifier',
                       suffixes=['', '_edc'])[['subject_identifier', 'subject_identifier_edc']]
+        df.rename(columns={'subject_identifier_edc': 'final_subject_identifier'}, inplace=True)
+        df['final_subject_identifier_source'] = 'clinic_consent (htc id)'
         df.drop_duplicates(inplace=True)
-        self.results = pd.merge(self.results, df, on='subject_identifier', how='left')
-        self.update_final_subject_identifier()
+        df.set_index('subject_identifier', inplace=True)
+        self.results.set_index('subject_identifier', inplace=True)
+        self.results = self.results.combine_first(df)
+        self.results.reset_index(inplace=True)
 
     def update_final_subject_identifier_from_requisitions(self):
         # find with lis_identifier > 7 but no subject identifier
@@ -150,9 +171,13 @@ class Lis(object):
                           on='edc_specimen_identifier',
                           how='inner',
                           suffixes=['', '_edc'])[['lis_identifier', 'subject_identifier']]
-            self.results = pd.merge(
-                self.results, df, on='lis_identifier', how='left', suffixes=['', '_edc'])
-            self.update_final_subject_identifier()
+            df.rename(columns={'subject_identifier': 'final_subject_identifier'}, inplace=True)
+            df['final_subject_identifier_source'] = 'edc requisition'
+            df.drop_duplicates(inplace=True)
+            df.set_index('lis_identifier', inplace=True)
+            self.results.set_index('lis_identifier', inplace=True)
+            self.results = self.results.combine_first(df)
+            self.results.reset_index(inplace=True)
 
     def update_final_subject_identifier_from_identity(self):
         df_rs = RegisteredSubject().df
@@ -161,36 +186,121 @@ class Lis(object):
                       left_on='subject_identifier',
                       right_on='identity',
                       suffixes=['', '_edc'])[['subject_identifier', 'subject_identifier_edc']]
+        df.rename(columns={'subject_identifier_edc': 'final_subject_identifier'}, inplace=True)
+        df['final_subject_identifier_source'] = 'edc registered_subject'
         df.drop_duplicates(inplace=True)
-        self.results = pd.merge(self.results, df, on='subject_identifier', how='left')
-        self.update_final_subject_identifier()
+        df.set_index('subject_identifier', inplace=True)
+        self.results.set_index('subject_identifier', inplace=True)
+        self.results = self.results.combine_first(df)
+        self.results.reset_index(inplace=True)
+
+    def update_final_subject_identifier_from_cdc(self, df_currentstudyparticipant):
+        """Update identifier from CDC HTC data."""
+        if not df_currentstudyparticipant.empty:
+            df = df_currentstudyparticipant
+            df['htcid'].fillna(value=np.nan, inplace=True)
+            df['htcid'] = df.apply(lambda row: undash(row['htcid']), axis=1)
+            df['ssid'].fillna(value=np.nan, inplace=True)
+            df['ssid'] = df.apply(lambda row: undash(row['ssid']), axis=1)
+            df = df.replace('unk', np.nan)
+            df = df[pd.notnull(df['omangnumber'])]
+            self.df_htc = df.copy()
+            self.df_htc = self.df_htc.rename(columns={'htcid': 'subject_identifier_cdc', 'omangnumber': 'identity'})
+            self.df_htc = pd.merge(
+                self.results[pd.isnull(self.results['final_subject_identifier'])],
+                self.df_htc[['subject_identifier_cdc', 'identity']],
+                left_on='subject_identifier',
+                right_on='subject_identifier_cdc',
+                suffixes=['', '_cdc'])[['subject_identifier', 'subject_identifier_cdc']]
+            self.df_htc.rename(columns={'subject_identifier_edc': 'final_subject_identifier'}, inplace=True)
+            self.df_htc['final_subject_identifier_source'] = 'cdc (htc)'
+            self.df_htc.drop_duplicates(inplace=True)
+            self.df_htc.set_index('subject_identifier', inplace=True)
+            self.results.set_index('subject_identifier', inplace=True)
+            self.results = self.results.combine_first(self.df_htc)
+            self.results.reset_index(inplace=True)
+            self.df_htc.reset_index(inplace=True)
+
+            self.df_ccc = df.copy()
+            self.df_ccc = self.df_ccc.rename(columns={'ssid': 'subject_identifier_cdc', 'omangnumber': 'identity'})
+            self.df_ccc = pd.merge(
+                self.results[pd.isnull(self.results['final_subject_identifier'])],
+                self.df_ccc[['subject_identifier_cdc', 'identity']],
+                left_on='subject_identifier',
+                right_on='subject_identifier_cdc',
+                suffixes=['', '_cdc'])[['subject_identifier', 'subject_identifier_cdc']]
+            self.df_ccc.rename(columns={'subject_identifier_edc': 'final_subject_identifier'}, inplace=True)
+            self.df_ccc['final_subject_identifier_source'] = 'cdc (ccc)'
+            self.df_ccc.drop_duplicates(inplace=True)
+            self.df_ccc.set_index('subject_identifier', inplace=True)
+            self.results.set_index('subject_identifier', inplace=True)
+            self.results = self.results.combine_first(self.df_ccc)
+            self.results.reset_index(inplace=True)
+            self.df_ccc.reset_index(inplace=True)
 
     def update_requisition_columns(self):
-        columns = ['edc_specimen_identifier', 'survey', 'visit_code', 'community',
-                   'drawn_datetime', 'requisition_datetime', 'is_drawn']
-        df = pd.concat([self.requisition.subject[columns], self.requisition.clinic[columns]])
-        self.results = pd.merge(self.results, df, on='edc_specimen_identifier',
-                                how='left', suffixes=['', '_edc'])
+        columns = ['edc_specimen_identifier', 'survey', 'visit_code',
+                   'drawn_datetime', 'requisition_datetime', 'is_drawn',
+                   'requisition_source', 'community']
+        self.results = pd.merge(
+            self.results,
+            self.requisition.all[pd.notnull(self.requisition.all['edc_specimen_identifier'])][columns],
+            on='edc_specimen_identifier',
+            how='left', suffixes=['', '_edc'])
+        self.results['requisition_datetime'] = pd.to_datetime(self.results['requisition_datetime'].dt.date)
 
 #     def update_final_subject_identifier_from_getresults(self):
 #         df_rs = RegisteredSubject().df
 
-    def update_final_subject_identifier(self):
-        self.results['final_subject_identifier'] = self.results.apply(
-            lambda row: self.fill_final_subject_identifier(row), axis=1)
-        del self.results['subject_identifier_edc']
+    def update_edc_specimen_identifier_from_requisition(self, edc_panels=None):
+        edc_panels = edc_panels or {'610': 1, '401': 2, '974': 3, '201': 4, '101': 5}
+        self.results['edc_panel_id'] = self.results.apply(
+            lambda row: edc_panels.get(row['test_id'], 0) if pd.notnull(row['test_id']) else np.nan,
+            axis=1)
+        df_req = self.requisition.all[pd.notnull(self.requisition.all['edc_specimen_identifier'])].copy()
+        df_req['requisition_datetime'] = pd.to_datetime(df_req['requisition_datetime'].dt.date)
+        df_req = df_req[
+            ~(df_req['edc_specimen_identifier'].isin(
+                self.results['edc_specimen_identifier']))]
+        panel_ids = [1, 3, 4, 5, 2]
+        for panel_id in panel_ids:
+            self.results = pd.merge(
+                self.results,
+                df_req[df_req['panel_id'] == panel_id][
+                    ['edc_specimen_identifier', 'subject_identifier', 'requisition_datetime',
+                     'panel_id']],
+                how='left',
+                left_on=['final_subject_identifier', 'drawn_datetime', 'edc_panel_id'],
+                right_on=['subject_identifier', 'requisition_datetime', 'panel_id'],
+                suffixes=['', '_merge'])
+            self.results['edc_specimen_identifier'] = self.results.apply(
+                lambda row: self.fill_edc_specimen_identifier(row), axis=1)
+            self.results.drop(
+                ['edc_specimen_identifier_merge', 'subject_identifier_merge',
+                 'panel_id', 'requisition_datetime'],
+                axis=1, inplace=True)
 
-    def fill_final_subject_identifier(self, row):
+    def update_final_subject_identifier(self, suffix=None, drop_column=None):
+        suffix = suffix or '_edc'
+        drop_column = True if drop_column is None else drop_column
+        self.results['final_subject_identifier'] = self.results.apply(
+            lambda row: self.fill_final_subject_identifier(row, suffix=suffix), axis=1)
+        if drop_column:
+            del self.results['subject_identifier{}'.format(suffix)]
+
+    def fill_final_subject_identifier(self, row, suffix=None):
+        suffix = suffix or '_edc'
         final_subject_identifier = row['final_subject_identifier']
         if pd.isnull(row['final_subject_identifier']):
-            if pd.notnull(row['subject_identifier_edc']):
-                final_subject_identifier = row['subject_identifier_edc']
+            if pd.notnull(row['subject_identifier{}'.format(suffix)]):
+                final_subject_identifier = row['subject_identifier{}'.format(suffix)]
         return final_subject_identifier
 
-    def undash(self, value, exclude_pattern):
-        if not re.match(exclude_pattern, value):
-            value = value.replace('-', '')
-        return value
+    def fill_edc_specimen_identifier(self, row):
+        if (pd.isnull(row['edc_specimen_identifier']) and
+                pd.notnull(row['edc_specimen_identifier_merge'])):
+            return row['edc_specimen_identifier_merge']
+        return row['edc_specimen_identifier']
 
     def other_identifier(self, row):
         if pd.notnull(row['htc_identifier']) and row['htc_identifier'].strip() != '':

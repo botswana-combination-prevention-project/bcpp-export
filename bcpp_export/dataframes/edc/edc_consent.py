@@ -28,4 +28,6 @@ class ClinicConsent(object):
         df.replace('', np.nan, inplace=True)
         df['lab_identifier'] = df['lab_identifier'].str.replace('-', '')
         df['htc_identifier'] = df['htc_identifier'].str.replace('-', '')
+        for column in list(df.select_dtypes(include=['datetime64[ns, UTC]']).columns):
+            df[column] = df[column].astype('datetime64[ns]')
         self.df = df

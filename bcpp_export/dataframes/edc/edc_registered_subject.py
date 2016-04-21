@@ -17,6 +17,8 @@ class RegisteredSubject(object):
         columns.remove('using')
         qs = EdcRegisteredSubject.objects.values_list(*columns).all()
         df = pd.DataFrame(list(qs), columns=columns)
+        for column in list(df.select_dtypes(include=['datetime64[ns, UTC]']).columns):
+            df[column] = df[column].astype('datetime64[ns]')
         df.fillna(value=np.nan, inplace=True)
         df.replace('', np.nan, inplace=True)
         df['identity'] = df.apply(lambda row: identity(row, 'identity'), axis=1)

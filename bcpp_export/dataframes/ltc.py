@@ -1,7 +1,6 @@
 import os
 import numpy as np
 import pandas as pd
-from bcpp_export.identity256 import identity256
 
 NOT_LINKED = 0
 LINKED = 1

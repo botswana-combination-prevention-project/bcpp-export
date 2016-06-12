@@ -12,17 +12,18 @@ from ..constants import gender, hiv_options, tf, yes_no, SUBJECT_IDENTIFIER, HOU
 from ..datetime_to_date import datetime_to_date
 from ..derived_variables import DerivedVariables
 from bcpp_export.constants import PLOT_IDENTIFIER
+from bhp066.apps.bcpp_subject.models.subject_visit import SubjectVisit
 
 
 class Subjects(object):
 
     """A class to generate a dataset of bcpp subject data for a given survey year.
 
-        from bcpp_export.subjects import Subjects
+        from bcpp_export.dataframes.subjects import Subjects
         s = Subjects('bcpp-year-1')
         s.results
 
-        from bcpp_export.subjects import Subjects
+        from bcpp_export.dataframes.subjects import Subjects
         s = Subjects('bcpp-year-1')
         s.to_csv()
 
@@ -43,6 +44,7 @@ class Subjects(object):
         self._residency_mobility = pd.DataFrame()
         self._results = pd.DataFrame()
         self._subject_consents = pd.DataFrame()
+        self._subject_visits = pd.DataFrame()
         self._subject_households = pd.DataFrame()
         self._subject_pimas = pd.DataFrame()
         self._subject_referrals = pd.DataFrame()
@@ -77,10 +79,11 @@ class Subjects(object):
             self.df_subject_consents, self.df_subject_households, how='left', on=self.merge_on)
         for attrname in dir(self):
             if attrname.startswith('df_') and attrname not in ('df_subject_consents', 'df_subject_households'):
+                suffix = '_' + ''.join([s[0] for s in attrname.split('_')])
                 df = getattr(self, attrname)
                 df.drop(drop_column, axis=1, inplace=True)
                 self._results = pd.merge(
-                    self._results, df, how='left', on=self.merge_on)
+                    self._results, df, how='left', on=self.merge_on, suffixes=['', suffix])
 
     def map_edc_responses_to_numerics(self):
         """Map responses from edc raw data, mostly strings, to numerics."""
@@ -165,6 +168,30 @@ class Subjects(object):
                 'household_member__household_structure__survey__survey_slug': 'survey'})
             self._subject_households = df
         return self._subject_households
+
+    @property
+    def df_subject_visits(self):
+        """Return a dataframe of a selection of the subject's visit values."""
+        if self._subject_visits.empty:
+            columns = [
+                'household_member',
+                'report_datetime',
+                'appointment__visit_definition__code',
+                'household_member__registered_subject',
+                'household_member__registered_subject__subject_identifier',
+            ]
+            qs = SubjectVisit.objects.values_list(*columns).filter(
+                household_member__household_structure__survey__survey_slug=self.survey_name)
+            df = pd.DataFrame(list(qs), columns=columns)
+            self._subject_visits = df.rename(columns={
+                'report_datetime': 'visit_date',
+                'household_member__registered_subject__subject_identifier': SUBJECT_IDENTIFIER,
+                'household_member': HOUSEHOLD_MEMBER,
+                'appointment__visit_definition__visit_code': 'visit_code',
+            })
+            self._subject_visits['visit_date'] = self._subject_visits.apply(
+                lambda row: datetime_to_date(row['visit_date']), axis=1)
+        return self._subject_visits
 
     @property
     def df_subject_referrals(self):
@@ -280,12 +307,13 @@ class Subjects(object):
         if self._hiv_care_adherence.empty:
             columns = ['subject_visit__household_member__registered_subject__subject_identifier',
                        'subject_visit__household_member',
-                       'ever_taken_arv', 'on_arv', 'arv_evidence',
+                       'ever_taken_arv', 'on_arv', 'arv_evidence', 'first_positive',
                        'clinic_receiving_from']
             qs = HivCareAdherence.objects.values_list(*columns).filter(
                 subject_visit__household_member__household_structure__survey__survey_slug=self.survey_name)
             df = pd.DataFrame(list(qs), columns=columns)
             self._hiv_care_adherence = df.rename(columns={
+                'first_positive': 'first_pos_date',
                 'subject_visit__household_member__registered_subject__subject_identifier': SUBJECT_IDENTIFIER,
                 'subject_visit__household_member': HOUSEHOLD_MEMBER})
         return self._hiv_care_adherence

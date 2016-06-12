@@ -42,7 +42,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'edc.core.crypto_fields',
+ #   'bcpp_export',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -144,3 +144,4 @@ VERIFY_GPS = False
 VERIFY_GPS_LOCATION = False
 VERIFY_PLOT_COMMUNITY_WITH_CURRENT_MAPPER = False
 LIMIT_EDIT_TO_CURRENT_COMMUNITY = False
+SUBJECT_TYPES = ['subject']

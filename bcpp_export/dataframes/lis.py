@@ -38,6 +38,15 @@ df1[df1['subject_identifier'] != df1['subject_identifier_lis']][['subject_identi
 
 df1[pd.isnull(df1['result'])][['subject_identifier', 'subject_identifier_lis', 'edc_specimen_identifier','drawn_datetime', 'survey', 'sample_condition']]
 
+df1 = pd.merge(df, df_clinic[['other_identifier', 'subject_identifier']], on='other_identifier', how='left')
+df1[~(df['other_identifier'].str.startswith('066'))][['subject_identifier_x', 'other_identifier', 'subject_identifier_y', 'result']]
+
+
+
+
+
+
+
 # fill df_lis in missing subject identifiers from clinic
 # match to lab_identifier
 df = pd.merge(df_lis[pd.isnull(df_lis['final_subject_identifier'])], df_clinic[['subject_identifier', 'lab_identifier']], left_on='subject_identifier', right_on='lab_identifier', suffixes=['', '_clinic'])[['subject_identifier', 'subject_identifier_clinic']]
@@ -73,9 +82,5 @@ df = pd.merge(df, df_req_clinic[['edc_specimen_identifier', 'subject_identifier'
 df_lis = pd.merge(df_lis, df, on='lis_identifier', how='left', suffixes=['', '_clinic'])
 df_lis['final_subject_identifier'] = df_lis.apply(lambda row: fill_final_subject_identifier(row), axis=1)
 
-
-
-df1 = pd.merge(df, df_clinic[['other_identifier', 'subject_identifier']], on='other_identifier', how='left')
-df1[~(df['other_identifier'].str.startswith('066'))][['subject_identifier_x', 'other_identifier', 'subject_identifier_y', 'result']]
 
 

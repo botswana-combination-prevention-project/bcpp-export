@@ -24,6 +24,7 @@ class DerivedVariables(object):
         self.elisa_hiv_result = row['elisa_hiv_result']
         self.elisa_hiv_result_date = row['elisa_hiv_result_date']
         self.ever_taken_arv = row['ever_taken_arv']
+        self.first_pos_date = row['first_pos_date']
         self.has_tested = row['has_tested']
         self.identity = row['identity']
         self.intervention = intervention(row)
@@ -40,7 +41,7 @@ class DerivedVariables(object):
         self.today_hiv_result_date = row['today_hiv_result_date']
         if self.result_recorded_document == edc_ART_PRESCRIPTION:
             self.arv_evidence = YES
-        self.age_in_years = relativedelta(row['consent_date'], row['dob']).years
+        self.age_in_years = relativedelta(row['visit_date'], row['dob']).years
         self.timestamp = timezone.now()
         self.final_hiv_status = np.nan
         self.final_hiv_date = np.nan
@@ -99,6 +100,10 @@ class DerivedVariables(object):
             self.prev_result = NEG
             self.prev_result_date = self.result_recorded_date
             self.prev_result_known = YES
+        elif self.first_pos_date:
+            self.prev_result = POS
+            self.prev_result_date = self.first_pos_date
+            self.prev_result_known = YES
         else:
             self.prev_result = np.nan
             self.prev_result_date = pd.NaT
@@ -109,7 +114,7 @@ class DerivedVariables(object):
         """Overwrite invalid result sequence and/or derive from arv status if possible."""
         if self.final_arv_status in (DEFAULTER, ON_ART) and (self.prev_result == NEG or pd.isnull(self.prev_result)):
             self.prev_result = POS
-            self.prev_result_date = pd.NaT
+            self.prev_result_date = pd.NaT  # maybe use HivCareAdherence.first_positive
             self.prev_result_known = YES
         if self.final_hiv_status == NEG and self.prev_result == POS:
             self.prev_result = np.nan

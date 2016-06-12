@@ -5,18 +5,22 @@ import pandas as pd
 
 from django.test.testcases import TestCase
 
+from bcpp_export.enumerated import enumerated
 from bcpp_export.derived_variables import DerivedVariables
 from bcpp_export.constants import (
     NEG, POS, UNK, YES, NAIVE, NO, DEFAULTER, edc_ART_PRESCRIPTION, ON_ART, SUBJECT_IDENTIFIER)
 
 
-class TestSubject(TestCase):
+class TestDerivedVariables(TestCase):
 
     def setUp(self):
         self.row = {
             SUBJECT_IDENTIFIER: '111111111-1',
             'consent_date': date(2016, 1, 15),
+            'visit_date': date(2016, 1, 15),
+            'first_pos_date': date(2015, 1, 15),
             'dob': datetime(1992, 1, 15),
+            'community': 'digawana',
             'arv_evidence': None,
             'elisa_hiv_result': None,
             'elisa_hiv_result_date': None,
@@ -33,6 +37,7 @@ class TestSubject(TestCase):
             'today_hiv_result': None,
             'today_hiv_result_date': None,
             'identity': None,
+            'household_identifier': '99999-9',
         }
 
     def test(self):
@@ -51,10 +56,11 @@ class TestSubject(TestCase):
         self.assertEqual(obj.prev_result, NEG)
 
     def test_final_hiv_status_date(self):
-        """Assert date is today's hiv result date."""
+        """Assert date is today's hiv result date if no first_pos_date."""
         self.row.update(
             today_hiv_result=POS,
-            today_hiv_result_date=date(2016, 1, 7)
+            today_hiv_result_date=date(2016, 1, 7),
+            first_pos_date=None,
         )
         obj = DerivedVariables(self.row)
         self.assertEqual(obj.final_hiv_status, POS)
@@ -63,16 +69,43 @@ class TestSubject(TestCase):
         self.assertTrue(pd.isnull(obj.prev_result_date))
         self.assertTrue(pd.isnull(obj.prev_result_known))
 
+    def test_final_hiv_status_date1(self):
+        """Assert date first_pos_date."""
+        self.row.update(
+            today_hiv_result=POS,
+            today_hiv_result_date=date(2016, 1, 7),
+            first_pos_date=date(2015, 1, 8)
+        )
+        obj = DerivedVariables(self.row)
+        self.assertEqual(obj.final_hiv_status, POS)
+        self.assertEqual(obj.final_hiv_status_date, date(2015, 1, 8))
+        self.assertTrue(obj.prev_result == POS)
+        self.assertTrue(obj.prev_result_date == date(2015, 1, 8))
+        self.assertTrue(obj.prev_result_known == YES)
+
     def test_prev_result1(self):
         """Assert prev_result is empty when there are no previous results recorded."""
         self.row.update(
             today_hiv_result=POS,
-            today_hiv_result_date=date(2016, 1, 7)
+            today_hiv_result_date=date(2016, 1, 7),
+            first_pos_date=None,
         )
         obj = DerivedVariables(self.row)
         self.assertTrue(pd.isnull(obj.prev_result))
         self.assertTrue(pd.isnull(obj.prev_result_date))
         self.assertTrue(pd.isnull(obj.prev_result_known))
+
+    def test_prev_result2(self):
+        """Assert prev_result is not empty when there is a first_pos_date reported."""
+        self.row.update(
+            today_hiv_result=POS,
+            today_hiv_result_date=date(2016, 1, 7),
+            first_pos_date=date(2015, 1, 8)
+        )
+        obj = DerivedVariables(self.row)
+        self.assertTrue(obj.prev_result == POS)
+        self.assertTrue(obj.prev_result_date == date(2015, 1, 8))
+        self.assertTrue(obj.prev_result_known == YES)
 
     def test_prev_result_pos(self):
         """Assert prev_result POS taken from recorded_hiv_result/recorded_hiv_result_date."""
@@ -80,7 +113,23 @@ class TestSubject(TestCase):
             today_hiv_result=POS,
             today_hiv_result_date=date(2016, 1, 7),
             recorded_hiv_result=POS,
-            recorded_hiv_result_date=date(2015, 1, 7)
+            recorded_hiv_result_date=date(2015, 1, 7),
+            first_pos_date=None
+        )
+        obj = DerivedVariables(self.row)
+        self.assertEqual(obj.prev_result, POS)
+        self.assertEqual(obj.prev_result_date, date(2015, 1, 7))
+        self.assertEqual(obj.prev_result_known, YES)
+
+    def test_prev_result_pos2(self):
+        """Assert prev_result POS taken from recorded_hiv_result/recorded_hiv_result_date
+        regardless of first_pos_date."""
+        self.row.update(
+            today_hiv_result=POS,
+            today_hiv_result_date=date(2016, 1, 7),
+            recorded_hiv_result=POS,
+            recorded_hiv_result_date=date(2015, 1, 7),
+            first_pos_date=date(2015, 1, 8)
         )
         obj = DerivedVariables(self.row)
         self.assertEqual(obj.prev_result, POS)

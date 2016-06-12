@@ -38,7 +38,6 @@ class CombinedDataFrames(object):
             'bhs plots': self.plots[self.plots['selected'].isin([1, 2]) & (pd.notnull(self.plots['plot_status']))],
             'enumerated': self.members.query(
                 'pair >= 1 and pair <= 13 and intervention == 1 and household_log_status != "refused"'),
-            # 'households': 
         }
 
     def to_csv(self, dataset_name, **kwargs):

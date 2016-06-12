@@ -1,9 +1,13 @@
+import sys
 import numpy as np
 import pandas as pd
+
+from django.core.management.color import color_style
 
 from bcpp_export import urls  # DO NOT DELETE
 
 from bhp066.apps.bcpp_household_member.models import HouseholdMember, EnrollmentChecklist, SubjectHtc
+
 from ..communities import communities, intervention
 from ..constants import (YES, NO, gender, yes_no, tf, edc_NOT_APPLICABLE, survival, PLOT_IDENTIFIER)
 from ..datetime_to_date import datetime_to_date
@@ -12,6 +16,10 @@ from ..enrolled import enrolled
 from .participation_status import (
     ParticipationStatus, ENROLLED, ABSENT, REFUSED, BHS_INELIGIBLE, DECEASED,
     UNKNOWN, MOVED, UNDECIDED)
+from bhp066.apps.bcpp_household.models.household_refusal import HouseholdRefusal
+from bcpp_export.household_refused import household_refused
+
+style = color_style()
 
 
 class Members(object):
@@ -22,16 +30,19 @@ class Members(object):
             self.subjects = pd.DataFrame() if subjects.empty else subjects
         except AttributeError:
             self.subjects = pd.DataFrame()
+        if self.subjects.empty:
+            sys.stdout.write(style.NOTICE('Warning: Subjects dataframe is empty. Some values cannot be determined.'))
         self._results = pd.DataFrame()
         self._df_participation_status = pd.DataFrame()
         self._df_enrollment_checklist = pd.DataFrame()
         self._df_subject_htc = pd.DataFrame()
+        self._df_household_refusal = pd.DataFrame()
 
     @property
     def results(self):
         if self._results.empty:
             columns = [
-                'registered_subject', 'gender', 'age_in_years', 'survival_status', 'study_resident',
+                'id', 'registered_subject', 'gender', 'age_in_years', 'survival_status', 'study_resident',
                 'household_structure',
                 'household_structure__household__household_identifier',
                 'household_structure__household__plot__plot_identifier',
@@ -44,6 +55,7 @@ class Members(object):
                     household_structure__household__plot__status='bcpp_clinic')
             df = pd.DataFrame(list(qs), columns=columns)
             self._results = df.rename(columns={
+                'id': 'household_member',
                 'household_structure__household__household_identifier': 'household_identifier',
                 'household_structure__household__plot__plot_identifier': PLOT_IDENTIFIER,
                 'household_structure__household__plot__community': 'community',
@@ -55,20 +67,45 @@ class Members(object):
             self.merge_dataframes()
             self.map_edc_responses_to_numerics()
             self.add_derived_columns()
+            self.remove_members_by_household_refusal()
+            # self.overwrite_member_values_with_subject_values()
         return self._results
+
+    def remove_members_by_household_refusal(self):
+        """Remove members if the household is marked as refused regardless of being enumerated.
+
+        If a member has enrolled (consented), do not remove."""
+        if self.subjects.empty:
+            sys.stdout.write(style.NOTICE('Subjects dataframe is empty. Cannot determined '
+                                          'member\'s enrollment status or exclude those from '
+                                          'households that refused.'))
+        else:
+            df = self._results
+            self._results = df[~((df['household_refused'] == 1) & (df['enrolled'] != 1))]
 
     def merge_dataframes(self):
         self._results = pd.merge(
-            self._results, self.df_participation_status, how='left', on='registered_subject')
+            self._results, self.df_participation_status, how='left', on='registered_subject', suffixes=['', 'ps'])
         self._results = pd.merge(
-            self._results, self.df_enrollment_checklist, how='left', on='registered_subject')
+            self._results, self.df_enrollment_checklist, how='left', on='registered_subject', suffixes=['', 'ec'])
         self._results = pd.merge(
-            self._results, self.df_subject_htc, how='left', on='registered_subject')
+            self._results, self.df_subject_htc, how='left', on='registered_subject', suffixes=['', 'sh'])
 
     def map_edc_responses_to_numerics(self):
         self._results['gender'] = self._results['gender'].map(gender.get)
         self._results['study_resident'] = self._results['study_resident'].map(yes_no.get)
         self._results['survival_status'] = self._results['survival_status'].map(survival.get)
+
+    def overwrite_member_values_with_subject_values(self):
+        self._results['gender'] = self._results.apply(
+            lambda row: self.subject_gender_or_gender(row), axis=1)
+
+    def subject_gender_or_gender(self, row):
+        if self.subjects.empty:
+            return row['gender']
+        if self.subjects[self.subjects['household_member'].isin([row['household_member']])].empty:
+            return row['gender']
+        return self.subjects[self.subjects['household_member'] == row['household_member']]['gender']
 
     def add_derived_columns(self):
         self._results['first_enumeration_date'] = self._results.apply(
@@ -81,6 +118,8 @@ class Members(object):
             lambda row: intervention(row), axis=1)
         self._results['pair'] = self._results.apply(
             lambda row: communities.get(row['community']).pair, axis=1)
+        self._results['household_refused'] = self._results.apply(
+            lambda row: household_refused(self.df_household_refusal, row), axis=1)
         if self.subjects.empty:
             self._results['enrolled'] = np.nan
             self._results['participation_status'] = np.nan
@@ -122,7 +161,9 @@ class Members(object):
     @property
     def df_enrollment_checklist(self):
         if self._df_enrollment_checklist.empty:
-            columns = ['household_member__registered_subject', 'is_eligible']
+            columns = [
+                'household_member__registered_subject',
+                'is_eligible']
             qs = EnrollmentChecklist.objects.values_list(*columns).filter(
                 household_member__household_structure__survey__survey_slug=self.survey_name)
             df = pd.DataFrame(list(qs), columns=columns)
@@ -153,3 +194,18 @@ class Members(object):
             df['htc_accepted'] = df['htc_accepted'].map(yes_no.get)
             self._df_subject_htc = df
         return self._df_subject_htc
+
+    @property
+    def df_household_refusal(self):
+        if self._df_household_refusal.empty:
+            columns = ['household_structure',
+                       'household_structure__household__household_identifier',
+                       'household_structure__survey__survey_slug']
+            qs = HouseholdRefusal.objects.values_list(*columns).filter(
+                household_structure__survey__survey_slug=self.survey_name).exclude(
+                    household_structure__household__plot__status='bcpp_clinic')
+            df = pd.DataFrame(list(qs), columns=columns)
+            self._df_household_refusal = df.rename(columns={
+                'household_structure__household__household_identifier': 'household_identifier',
+                'household_structure__survey__survey_slug': 'survey'})
+        return self._df_household_refusal

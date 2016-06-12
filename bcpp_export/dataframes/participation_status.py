@@ -50,11 +50,16 @@ class ParticipationStatus(object):
     @property
     def df_subject_absentee(self):
         if self._df_subject_absentee.empty:
-            columns = 'subject_absentee__household_member__registered_subject', 'created', 'modified'
+            columns = [
+                'subject_absentee__household_member',
+                'subject_absentee__household_member__registered_subject',
+                'created',
+                'modified']
             qs = SubjectAbsenteeEntry.objects.values_list(*columns).filter(
                 subject_absentee__household_member__household_structure__survey__survey_slug=self.survey_name)
             df = pd.DataFrame(list(qs), columns=columns)
             df = df.rename(columns={
+                'subject_absentee__household_member': 'household_member',
                 'subject_absentee__household_member__registered_subject': 'registered_subject'})
             if df.empty:
                 self._df_subject_absentee = pd.DataFrame()
@@ -66,7 +71,8 @@ class ParticipationStatus(object):
     @property
     def df_subject_refusal(self):
         if self._df_subject_refusal.empty:
-            columns = 'household_member__registered_subject', 'created', 'modified'
+            columns = [
+                'household_member__registered_subject', 'created', 'modified']
             qs = SubjectRefusal.objects.values_list(*columns).filter(
                 household_member__household_structure__survey__survey_slug=self.survey_name)
             df = pd.DataFrame(list(qs), columns=columns)
@@ -82,7 +88,7 @@ class ParticipationStatus(object):
     @property
     def df_subject_moved(self):
         if self._df_subject_moved.empty:
-            columns = 'household_member__registered_subject', 'created', 'modified'
+            columns = ['household_member__registered_subject', 'created', 'modified']
             qs = SubjectMoved.objects.values_list(*columns).filter(
                 household_member__household_structure__survey__survey_slug=self.survey_name)
             df = pd.DataFrame(list(qs), columns=columns)
@@ -98,7 +104,7 @@ class ParticipationStatus(object):
     @property
     def df_subject_undecided(self):
         if self._df_subject_undecided.empty:
-            columns = 'household_member__registered_subject', 'created', 'modified'
+            columns = ['household_member__registered_subject', 'created', 'modified']
             qs = SubjectUndecided.objects.values_list(*columns).filter(
                 household_member__household_structure__survey__survey_slug=self.survey_name)
             df = pd.DataFrame(list(qs), columns=columns)
@@ -114,7 +120,7 @@ class ParticipationStatus(object):
     @property
     def df_subject_death(self):
         if self._df_subject_death.empty:
-            columns = 'household_member__registered_subject', 'created', 'modified'
+            columns = ['household_member__registered_subject', 'created', 'modified']
             qs = SubjectDeath.objects.values_list(*columns).filter(
                 household_member__household_structure__survey__survey_slug=self.survey_name)
             df = pd.DataFrame(list(qs), columns=columns)

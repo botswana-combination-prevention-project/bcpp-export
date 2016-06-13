@@ -13,11 +13,15 @@ class CombinedDataFrames(object):
 
     """A class to generate and format for CSV export based on data in objects Members, Subjects and
     Residences.
-    
+
     For example:
-        # if members, subjects, residences already exist
+        # all from scratch for pairs 1-13 only
+        dfs = CombinedDataFrames('bcpp-year-1', pair_range=(1, 13))
+
+        # if instances members, subjects, residences already exist
         dfs = CombinedDataFrames(
-            'bcpp-year-1', members_object=members, subjects_object=subject, residences_object=residences)
+            'bcpp-year-1', members_object=members, subjects_object=subjects, residences_object=residences)
+        
     """
 
     def __init__(self, survey_name, pair_range=None, merge_subjects_on=None, add_identity256=None,

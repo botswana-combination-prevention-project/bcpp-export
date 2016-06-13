@@ -1,5 +1,9 @@
+import sys
+
 import numpy as np
 import pandas as pd
+
+from django.core.management.color import color_style
 
 from bcpp_export import urls  # DO NOT DELETE
 
@@ -10,6 +14,8 @@ from ..communities import communities, intervention
 from ..constants import PLOT_IDENTIFIER, yes_no, YES, NO
 from ..enrolled import enrolled
 from ..enumerated import enumerated
+
+style = color_style()
 
 
 class Residences(object):
@@ -34,10 +40,14 @@ class Residences(object):
             self.subjects = pd.DataFrame() if subjects.empty else subjects
         except AttributeError:
             self.subjects = pd.DataFrame()
+        if self.subjects.empty:
+            sys.stdout.write(style.NOTICE('Warning: Subjects dataframe is empty. Some values cannot be determined.'))
         try:
             self.members = pd.DataFrame() if members.empty else members
         except AttributeError:
             self.members = pd.DataFrame()
+        if self.members.empty:
+            sys.stdout.write(style.NOTICE('Warning: Members dataframe is empty. Some values cannot be determined.'))
 
     @property
     def residences(self):

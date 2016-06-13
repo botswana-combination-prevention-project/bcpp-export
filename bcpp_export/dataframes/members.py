@@ -6,18 +6,18 @@ from django.core.management.color import color_style
 
 from bcpp_export import urls  # DO NOT DELETE
 
+from bhp066.apps.bcpp_household.models.household_refusal import HouseholdRefusal
 from bhp066.apps.bcpp_household_member.models import HouseholdMember, EnrollmentChecklist, SubjectHtc
 
 from ..communities import communities, intervention
 from ..constants import (YES, NO, gender, yes_no, tf, edc_NOT_APPLICABLE, survival, PLOT_IDENTIFIER)
 from ..datetime_to_date import datetime_to_date
 from ..enrolled import enrolled
+from ..household_refused import household_refused
 
 from .participation_status import (
     ParticipationStatus, ENROLLED, ABSENT, REFUSED, BHS_INELIGIBLE, DECEASED,
     UNKNOWN, MOVED, UNDECIDED)
-from bhp066.apps.bcpp_household.models.household_refusal import HouseholdRefusal
-from bcpp_export.household_refused import household_refused
 
 style = color_style()
 
@@ -68,7 +68,8 @@ class Members(object):
             self.map_edc_responses_to_numerics()
             self.add_derived_columns()
             self.remove_members_by_household_refusal()
-            # self.overwrite_member_values_with_subject_values()
+            self.subjects_value_or_value('gender')
+            self.subjects_value_or_value('age_in_years', astype=int)
         return self._results
 
     def remove_members_by_household_refusal(self):
@@ -96,16 +97,18 @@ class Members(object):
         self._results['study_resident'] = self._results['study_resident'].map(yes_no.get)
         self._results['survival_status'] = self._results['survival_status'].map(survival.get)
 
-    def overwrite_member_values_with_subject_values(self):
-        self._results['gender'] = self._results.apply(
-            lambda row: self.subject_gender_or_gender(row), axis=1)
-
-    def subject_gender_or_gender(self, row):
-        if self.subjects.empty:
-            return row['gender']
-        if self.subjects[self.subjects['household_member'].isin([row['household_member']])].empty:
-            return row['gender']
-        return self.subjects[self.subjects['household_member'] == row['household_member']]['gender']
+    def subjects_value_or_value(self, attr, astype=None):
+        """Replace a column value with that from subjects, if there is a subject value."""
+        subject_suffix = '_as_subject'
+        subject_attr = '{}{}'.format(attr, subject_suffix)
+        self._results = pd.merge(
+            self._results, self.subjects[['registered_subject', attr]],
+            on='registered_subject', how='left', suffixes=['', subject_suffix])
+        self._results[attr] = self._results.apply(
+            lambda row: row[attr] if pd.isnull(row[subject_attr]) else row[subject_attr], axis=1)
+        self._results.drop([subject_attr], axis=1, inplace=True)
+        if astype:
+            self._results[attr] = self._results[attr].astype(astype)
 
     def add_derived_columns(self):
         self._results['first_enumeration_date'] = self._results.apply(

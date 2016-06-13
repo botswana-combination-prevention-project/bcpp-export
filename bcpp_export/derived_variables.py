@@ -1,15 +1,12 @@
-import hashlib
 import numpy as np
 import pandas as pd
 
 from dateutil.relativedelta import relativedelta
-from django.core.exceptions import ImproperlyConfigured
 from django.utils import timezone
-from edc.core.crypto_fields.classes import FieldCryptor
 
+from .communities import communities, intervention
 from .constants import (YES, NO, DEFAULTER, NAIVE, NEG, ON_ART, POS, UNK,
                         SUBJECT_IDENTIFIER, edc_ART_PRESCRIPTION)
-from .communities import communities, intervention
 from .identity256 import identity256
 
 
@@ -60,13 +57,6 @@ class DerivedVariables(object):
     def identity256(self):
         if pd.isnull(self._identity256):
             self._identity256 = identity256({'identity': self.identity})
-#         if pd.isnull(self._identity256):
-#             field_cryptor = FieldCryptor('rsa', 'restricted')
-#             identity = field_cryptor.decrypt(self.identity)
-#             if identity.startswith('enc1::'):
-#                 raise ImproperlyConfigured(
-#                     'Cannot decrypt identity, specify path to the encryption keys in settings.KEYPATH')
-#             self._identity256 = hashlib.sha256(identity).digest().encode("hex")
         return self._identity256
 
     @property
@@ -114,7 +104,7 @@ class DerivedVariables(object):
         """Overwrite invalid result sequence and/or derive from arv status if possible."""
         if self.final_arv_status in (DEFAULTER, ON_ART) and (self.prev_result == NEG or pd.isnull(self.prev_result)):
             self.prev_result = POS
-            self.prev_result_date = pd.NaT  # maybe use HivCareAdherence.first_positive
+            self.prev_result_date = self.first_pos_date or pd.NaT
             self.prev_result_known = YES
         if self.final_hiv_status == NEG and self.prev_result == POS:
             self.prev_result = np.nan
@@ -166,6 +156,9 @@ class DerivedVariables(object):
         elif self.documented_pos == YES:
             self.final_hiv_status = POS
             self.final_hiv_date = self.documented_pos_date
+        elif self.first_pos_date:
+            self.final_hiv_status = POS
+            self.final_hiv_date = self.first_pos_date
         else:
             self.final_hiv_status = UNK
             self.final_hiv_date = pd.NaT

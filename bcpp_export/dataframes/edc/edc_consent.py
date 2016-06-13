@@ -44,7 +44,7 @@ class SubjectConsent(object):
         columns.remove('using')
         columns.append('household_member__household_structure__survey__survey_slug')
         columns.append('household_member__household_structure__household__plot__community')
-        qs = EdcClinicConsent.objects.values_list(*columns).all()
+        qs = EdcSubjectConsent.objects.values_list(*columns).all()
         df = pd.DataFrame(list(qs), columns=columns)
         df.rename(columns={
             'household_member__household_structure__survey__survey_slug': 'survey',

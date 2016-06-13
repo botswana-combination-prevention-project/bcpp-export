@@ -1,18 +1,17 @@
-import pandas as pd
 import os
+
+import pandas as pd
 
 from bcpp_export import urls  # DO NOT DELETE
 
 from bhp066.apps.bcpp_subject.models import (
     SubjectReferral, SubjectConsent, Circumcision, ElisaHivResult, HivCareAdherence, HivResult,
     HivResultDocumentation, HivTestReview, HivTestingHistory, Pima, ReproductiveHealth,
-    ResidencyMobility)
+    ResidencyMobility, SubjectVisit)
 
-from ..constants import gender, hiv_options, tf, yes_no, SUBJECT_IDENTIFIER, HOUSEHOLD_MEMBER
+from ..constants import gender, hiv_options, tf, yes_no, SUBJECT_IDENTIFIER, HOUSEHOLD_MEMBER, PLOT_IDENTIFIER
 from ..datetime_to_date import datetime_to_date
 from ..derived_variables import DerivedVariables
-from bcpp_export.constants import PLOT_IDENTIFIER
-from bhp066.apps.bcpp_subject.models.subject_visit import SubjectVisit
 
 
 class Subjects(object):

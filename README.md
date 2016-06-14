@@ -60,13 +60,17 @@ But you can change this when calling `to_csv`, for example:
 
  If you wanted to see the filtered dataframe:
  
-     filtered_df = members.filtered_export_dataframe(export_arms=(INTERVENTION, NON_INTERVENTION), export_pairs=(1, 3))
+     filtered_df = members.filtered_export_dataframe(
+         export_arms=(INTERVENTION, NON_INTERVENTION), export_pairs=(1, 3))
      filtered_df.groupby('pair').size()
+
      pair
         1      320
         2      233
         3     1009
+
      filtered_df.groupby('intervention').size()
+
      intervention
         0     800
         1     762

@@ -8,6 +8,11 @@ from .residences import Residences
 from .members import Members
 from .subjects import Subjects
 
+MIN = 0
+MAX = 1
+INTERVENTION = 1
+NON_INTERVENTION = 0
+
 
 class CombinedDataFrames(object):
 
@@ -24,9 +29,10 @@ class CombinedDataFrames(object):
         
     """
 
-    def __init__(self, survey_name, pair_range=None, merge_subjects_on=None, add_identity256=None,
+    def __init__(self, survey_name, pair_range=None, arms=None, merge_subjects_on=None, add_identity256=None,
                  export_folder=None, members_object=None, subjects_object=None, residences_object=None):
         self.pair = pair_range or (1, 15)
+        self.arm = arms or (INTERVENTION, )
         self.export_folder = export_folder or os.path.expanduser('~/')
         self.survey_name = survey_name
         self.obj_subjects = subjects_object or Subjects(self.survey_name, merge_subjects_on, add_identity256)
@@ -64,6 +70,7 @@ class CombinedDataFrames(object):
         columns = kwargs.get('columns', {})
         for name in self.dataset_names(dataset_name):
             df = getattr(self, name)
+            df = df[df['intervention'].isin(self.arm) & df['pair'].isin(range(self.pair[0], self.pair[1] + 1))]
             options = dict(
                 path_or_buf=os.path.expanduser(
                     kwargs.get('path_or_buf') or

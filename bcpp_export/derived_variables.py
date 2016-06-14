@@ -21,7 +21,6 @@ class DerivedVariables(object):
         self.elisa_hiv_result = row['elisa_hiv_result']
         self.elisa_hiv_result_date = row['elisa_hiv_result_date']
         self.ever_taken_arv = row['ever_taken_arv']
-        self.first_pos_date = row['first_pos_date']
         self.has_tested = row['has_tested']
         self.identity = row['identity']
         self.intervention = intervention(row)
@@ -49,7 +48,7 @@ class DerivedVariables(object):
         self.prev_result_date = pd.NaT
         self.prev_result_known = np.nan
         self.prepare_documented_status_and_date()
-        self.prepare_final_hiv_status_and_date()
+        self.prepare_final_hiv_status()
         self.prepare_final_arv_status()
         self.prepare_previous_status_date_and_awareness()
 
@@ -59,17 +58,59 @@ class DerivedVariables(object):
             self._identity256 = identity256({'identity': self.identity})
         return self._identity256
 
+#    @property
+#     def final_hiv_status_date(self):
+#         """Return the oldest POS result date or the most recent NEG result date."""
+#         print(self.final_hiv_status)
+#         final_hiv_status_date = np.nan
+#         if self.prev_result_known == YES and self.prev_result == POS and self.final_hiv_status == POS:
+#             final_hiv_status_date = self.prev_result_date
+#         elif self.prev_result_known == YES and self.prev_result == NEG and self.final_hiv_status == NEG:
+#             if pd.notnull(self.elisa_hiv_result_date):
+#                 final_hiv_status_date = self.elisa_hiv_result_date
+#             elif pd.notnull(self.today_hiv_result_date):
+#                 final_hiv_status_date = self.today_hiv_result_date
+#             else:
+#                 final_hiv_status_date = self.prev_result_date
+#         elif self.today_hiv_result == POS and self.final_hiv_status == POS:
+#             final_hiv_status_date = self.today_hiv_result_date
+#         elif self.elisa_hiv_result == POS and self.final_hiv_status == POS:
+#             final_hiv_status_date = self.elisa_hiv_result_date
+#         elif self.today_hiv_result == NEG and self.final_hiv_status == NEG:
+#             final_hiv_status_date = self.today_hiv_result_date
+#         return final_hiv_status_date
     @property
     def final_hiv_status_date(self):
-        if self.prev_result_known == YES and self.prev_result == POS:
-            final_hiv_status_date = self.prev_result_date
-        elif self.prev_result_known == YES and self.prev_result == NEG:
-            if pd.notnull(self.today_hiv_result_date):
-                final_hiv_status_date = self.today_hiv_result_date
-            else:
+        """Return the oldest POS result date or the most recent NEG result date."""
+        final_hiv_status_date = self.final_hiv_status_date_if_pos
+        if pd.isnull(final_hiv_status_date):
+            final_hiv_status_date = self.final_hiv_status_date_if_neg
+        return final_hiv_status_date
+
+    @property
+    def final_hiv_status_date_if_pos(self):
+        """Return oldest date if final result is POS."""
+        final_hiv_status_date = np.nan
+        if self.final_hiv_status == POS:
+            if self.prev_result_known == YES and self.prev_result == POS:
                 final_hiv_status_date = self.prev_result_date
-        else:
-            final_hiv_status_date = self.today_hiv_result_date
+            elif self.today_hiv_result == POS:
+                final_hiv_status_date = self.today_hiv_result_date
+            elif self.elisa_hiv_result == POS:
+                final_hiv_status_date = self.elisa_hiv_result_date
+        return final_hiv_status_date
+
+    @property
+    def final_hiv_status_date_if_neg(self):
+        """Return most recent date if final result is NEG."""
+        final_hiv_status_date = np.nan
+        if self.final_hiv_status == NEG:
+            if pd.notnull(self.elisa_hiv_result_date):
+                final_hiv_status_date = self.elisa_hiv_result_date
+            elif pd.notnull(self.today_hiv_result_date):
+                final_hiv_status_date = self.today_hiv_result_date
+            elif self.prev_result_known == YES and self.prev_result == NEG:
+                final_hiv_status_date = self.prev_result_date
         return final_hiv_status_date
 
     def prepare_previous_status_date_and_awareness(self):
@@ -90,10 +131,6 @@ class DerivedVariables(object):
             self.prev_result = NEG
             self.prev_result_date = self.result_recorded_date
             self.prev_result_known = YES
-        elif self.first_pos_date:
-            self.prev_result = POS
-            self.prev_result_date = self.first_pos_date
-            self.prev_result_known = YES
         else:
             self.prev_result = np.nan
             self.prev_result_date = pd.NaT
@@ -102,14 +139,26 @@ class DerivedVariables(object):
 
     def previous_status_date_and_awareness_exceptions(self):
         """Overwrite invalid result sequence and/or derive from arv status if possible."""
+        # evidence of ARV's implies POS previous result
         if self.final_arv_status in (DEFAULTER, ON_ART) and (self.prev_result == NEG or pd.isnull(self.prev_result)):
             self.prev_result = POS
-            self.prev_result_date = self.first_pos_date or pd.NaT
+            self.prev_result_date = self.best_prev_result_date
             self.prev_result_known = YES
-        if self.final_hiv_status == NEG and self.prev_result == POS:
-            self.prev_result = np.nan
-            self.prev_result_date = pd.NaT
-            self.prev_result_known = np.nan
+        # if finally NEG, a known previous result must wrong, so flip to NEG
+        if self.final_hiv_status == NEG and self.prev_result_known == YES:
+            self.prev_result = NEG
+            # self.debug.append('changed prev_result POS->NEG')
+
+    @property
+    def best_prev_result_date(self):
+        """Return best date after changing result based on ARV status."""
+        if self.recorded_hiv_result == POS:
+            best_prev_result_date = self.recorded_hiv_result_date
+        elif self.result_recorded == POS:
+            best_prev_result_date = self.result_recorded_date
+        else:
+            best_prev_result_date = np.nan
+        return best_prev_result_date
 
     def prepare_final_arv_status(self):
         self.final_arv_status = np.nan
@@ -146,19 +195,16 @@ class DerivedVariables(object):
             self.documented_pos = NO
             self.documented_pos_date = pd.NaT
 
-    def prepare_final_hiv_status_and_date(self):
+    def prepare_final_hiv_status(self):
         if self.elisa_hiv_result in (POS, NEG):
             self.final_hiv_status = self.elisa_hiv_result
-            self.final_hiv_date = self.elisa_hiv_result_date
+            # self._final_hiv_status_date = self.elisa_hiv_result_date
         elif self.today_hiv_result in (POS, NEG):
             self.final_hiv_status = self.today_hiv_result
-            self.final_hiv_date = self.today_hiv_result_date
+            # self._final_hiv_status_date = self.today_hiv_result_date
         elif self.documented_pos == YES:
             self.final_hiv_status = POS
-            self.final_hiv_date = self.documented_pos_date
-        elif self.first_pos_date:
-            self.final_hiv_status = POS
-            self.final_hiv_date = self.first_pos_date
+            # self._final_hiv_status_date = self.documented_pos_date
         else:
             self.final_hiv_status = UNK
-            self.final_hiv_date = pd.NaT
+            # self._final_hiv_status_date = pd.NaT

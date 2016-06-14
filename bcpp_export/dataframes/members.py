@@ -69,7 +69,6 @@ class Members(object):
             self.add_derived_columns()
             self.remove_members_by_household_refusal()
             self.subjects_value_or_value('gender')
-            self.subjects_value_or_value('age_in_years', astype=int)
         return self._results
 
     def remove_members_by_household_refusal(self):
@@ -82,15 +81,16 @@ class Members(object):
                                           'households that refused.'))
         else:
             df = self._results
-            self._results = df[~((df['household_refused'] == 1) & (df['enrolled'] != 1))]
+            # should be by household enrolled not member enrolled
+            self._results = df[~((df['household_refused'] == 1) & (df['household_enrolled'] != 1))]
 
     def merge_dataframes(self):
         self._results = pd.merge(
-            self._results, self.df_participation_status, how='left', on='registered_subject', suffixes=['', 'ps'])
+            self._results, self.df_participation_status, how='left', on='registered_subject', suffixes=['', '_ps'])
         self._results = pd.merge(
-            self._results, self.df_enrollment_checklist, how='left', on='registered_subject', suffixes=['', 'ec'])
+            self._results, self.df_enrollment_checklist, how='left', on='registered_subject', suffixes=['', '_ec'])
         self._results = pd.merge(
-            self._results, self.df_subject_htc, how='left', on='registered_subject', suffixes=['', 'sh'])
+            self._results, self.df_subject_htc, how='left', on='registered_subject', suffixes=['', '_sh'])
 
     def map_edc_responses_to_numerics(self):
         self._results['gender'] = self._results['gender'].map(gender.get)
@@ -124,9 +124,13 @@ class Members(object):
         self._results['household_refused'] = self._results.apply(
             lambda row: household_refused(self.df_household_refusal, row), axis=1)
         if self.subjects.empty:
+            self._results['household_enrolled'] = np.nan
             self._results['enrolled'] = np.nan
             self._results['participation_status'] = np.nan
         else:
+            self._results['household_enrolled'] = self._results['household_identifier'].isin(
+                self.subjects['household_identifier'])
+            self._results['household_enrolled'] = self._results['household_enrolled'].map(tf.get)
             self._results['enrolled'] = self._results.apply(
                 lambda row: enrolled(self.subjects, row, 'registered_subject'), axis=1)
             self._results['participation_status'] = self._results.apply(

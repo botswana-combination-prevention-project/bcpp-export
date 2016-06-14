@@ -104,6 +104,7 @@ class Subjects(object):
         self._results['result_recorded'] = self._results['result_recorded'].map(hiv_options.get)
         self._results['self_reported_result'] = self._results['self_reported_result'].map(hiv_options.get)
         self._results['today_hiv_result'] = self._results['today_hiv_result'].map(hiv_options.get)
+        self._results['elisa_hiv_result'] = self._results['elisa_hiv_result'].map(hiv_options.get)
 
     def add_derived_columns(self):
         attrnames = [
@@ -306,13 +307,12 @@ class Subjects(object):
         if self._hiv_care_adherence.empty:
             columns = ['subject_visit__household_member__registered_subject__subject_identifier',
                        'subject_visit__household_member',
-                       'ever_taken_arv', 'on_arv', 'arv_evidence', 'first_positive',
+                       'ever_taken_arv', 'on_arv', 'arv_evidence',
                        'clinic_receiving_from']
             qs = HivCareAdherence.objects.values_list(*columns).filter(
                 subject_visit__household_member__household_structure__survey__survey_slug=self.survey_name)
             df = pd.DataFrame(list(qs), columns=columns)
             self._hiv_care_adherence = df.rename(columns={
-                'first_positive': 'first_pos_date',
                 'subject_visit__household_member__registered_subject__subject_identifier': SUBJECT_IDENTIFIER,
                 'subject_visit__household_member': HOUSEHOLD_MEMBER})
         return self._hiv_care_adherence

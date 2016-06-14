@@ -191,13 +191,9 @@ class DerivedVariables(object):
     def prepare_final_hiv_status(self):
         if self.elisa_hiv_result in (POS, NEG):
             self.final_hiv_status = self.elisa_hiv_result
-            # self._final_hiv_status_date = self.elisa_hiv_result_date
         elif self.today_hiv_result in (POS, NEG):
             self.final_hiv_status = self.today_hiv_result
-            # self._final_hiv_status_date = self.today_hiv_result_date
         elif self.documented_pos == YES:
             self.final_hiv_status = POS
-            # self._final_hiv_status_date = self.documented_pos_date
         else:
             self.final_hiv_status = UNK
-            # self._final_hiv_status_date = pd.NaT

@@ -56,8 +56,8 @@ class CombinedDataFrames(CsvExportMixin):
         members = self.filtered_export_dataframe(self.members, **kwargs)
         subjects = self.filtered_export_dataframe(self.subjects, **kwargs)
         return {
-            'total plots': len(plots),
-            'bhs plots': len(plots[plots['selected'].isin([1, 2]) & (pd.notnull(plots['plot_status']))]),
+            'total_plots': len(plots),
+            'bhs_plots': len(plots[plots['selected'].isin([1, 2]) & (pd.notnull(plots['plot_status']))]),
             'households_enrolled': len(members[members['household_enrolled'] == 1]),
             'households_not_enrolled': len(members[members['household_enrolled'] == 0]),
             'enumerated': len(members),

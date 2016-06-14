@@ -22,7 +22,7 @@ class CsvExportMixin(object):
         self.export_pairs = kwargs.get('export_pairs', self.default_export_pairs)
         self.export_arms = kwargs.get('export_arms', self.default_export_arms)
 
-    def filtered_export_dataframe(self, df, export_arms=None, export_pairs=None):
+    def filtered_export_dataframe(self, df, export_arms=None, export_pairs=None, **kwargs):
         """Return a DF filtered by intervention arm(s) and pair(s).
 
         This is the DF that exports by default."""
@@ -51,11 +51,10 @@ class CsvExportMixin(object):
     def dataset_names(self, dataset_name):
         """Return the dataset_name(s) to export as a list or
         if dataset_name == all return a list of all dataset_names."""
-        valid_dataset_names = self.valid_dataset_names + ['all']
-        if dataset_name not in self.valid_dataset_names + ['all']:
-            raise TypeError('Invalid dataset name, expected one of {}'.format(valid_dataset_names))
+        if dataset_name not in self.export_dataset_names + ['all']:
+            raise TypeError('Invalid dataset name, expected one of {}'.format(self.export_dataset_names + ['all']))
         if dataset_name == 'all':
-            dataset_names = valid_dataset_names
+            dataset_names = self.export_dataset_names
         else:
             dataset_names = [dataset_name]
         return dataset_names

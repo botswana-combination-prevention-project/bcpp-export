@@ -3,7 +3,7 @@ import os
 
 from datetime import date
 from bcpp_export import urls  # DO NOT DELETE
-
+from bcpp_export.constants import YES, POS
 from .csv_export_mixin import CsvExportMixin
 from .members import Members
 from .residences import Residences
@@ -51,12 +51,21 @@ class CombinedDataFrames(CsvExportMixin):
         assert len(self.plots.query('enrolled == 1')) == len(pd.unique(self.subjects.plot_identifier.ravel()))
         assert len(self.residences.query('enrolled == 1')) == len(pd.unique(self.subjects.household_identifier.ravel()))
 
-    def plot_summary(self):
+    def summary(self, **kwargs):
+        plots = self.filtered_export_dataframe(self.plots, **kwargs)
+        members = self.filtered_export_dataframe(self.members, **kwargs)
+        subjects = self.filtered_export_dataframe(self.subjects, **kwargs)
         return {
-            'total plots': len(self.plots),
-            'bhs plots': self.plots[self.plots['selected'].isin([1, 2]) & (pd.notnull(self.plots['plot_status']))],
-            'enumerated': self.members.query(
-                'pair >= {pair_min} and pair <= {pair_max} and intervention in {arm} and '
-                'household_log_status != "refused"'.format(pair_min=self.pair[0], pair_max=self.pair[1], self.arm)
-            ),
+            'total plots': len(plots),
+            'bhs plots': len(plots[plots['selected'].isin([1, 2]) & (pd.notnull(plots['plot_status']))]),
+            'households_enrolled': len(members[members['household_enrolled'] == 1]),
+            'households_not_enrolled': len(members[members['household_enrolled'] == 0]),
+            'enumerated': len(members),
+            'enumerated_enrolled': len(members[members['enrolled'] == 1]),
+            'enumerated_not_enrolled': len(members[members['enrolled'] == 0]),
+            'enumerated_hhlog_refused': len(members.query('household_log_status != "refused"')),
+            'subjects_interviewed': len(subjects),
+            'subjects_interviewed_pos': len(subjects[subjects['final_hiv_status'] == POS]),
+            'subjects_interviewed_known_pos': len(
+                subjects[subjects['prev_result'] == POS & subjects['prev_result_known'] == YES]),
         }

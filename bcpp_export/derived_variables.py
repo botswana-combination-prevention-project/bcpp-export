@@ -114,7 +114,9 @@ class DerivedVariables(object):
         return False
 
     def update_prev_result_if(self, result):
-        """Set """
+        """Update the prev_result attributes based on the value of `result`.
+
+        The caller is responsible for handling recorded_hiv_result and result_recorded being discordant."""
         if self.recorded_hiv_result == result:
             self.prev_result = result
             self.prev_result_date = self.recorded_hiv_result_date

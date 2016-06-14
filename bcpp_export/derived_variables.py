@@ -58,27 +58,6 @@ class DerivedVariables(object):
             self._identity256 = identity256({'identity': self.identity})
         return self._identity256
 
-#    @property
-#     def final_hiv_status_date(self):
-#         """Return the oldest POS result date or the most recent NEG result date."""
-#         print(self.final_hiv_status)
-#         final_hiv_status_date = np.nan
-#         if self.prev_result_known == YES and self.prev_result == POS and self.final_hiv_status == POS:
-#             final_hiv_status_date = self.prev_result_date
-#         elif self.prev_result_known == YES and self.prev_result == NEG and self.final_hiv_status == NEG:
-#             if pd.notnull(self.elisa_hiv_result_date):
-#                 final_hiv_status_date = self.elisa_hiv_result_date
-#             elif pd.notnull(self.today_hiv_result_date):
-#                 final_hiv_status_date = self.today_hiv_result_date
-#             else:
-#                 final_hiv_status_date = self.prev_result_date
-#         elif self.today_hiv_result == POS and self.final_hiv_status == POS:
-#             final_hiv_status_date = self.today_hiv_result_date
-#         elif self.elisa_hiv_result == POS and self.final_hiv_status == POS:
-#             final_hiv_status_date = self.elisa_hiv_result_date
-#         elif self.today_hiv_result == NEG and self.final_hiv_status == NEG:
-#             final_hiv_status_date = self.today_hiv_result_date
-#         return final_hiv_status_date
     @property
     def final_hiv_status_date(self):
         """Return the oldest POS result date or the most recent NEG result date."""
@@ -114,28 +93,40 @@ class DerivedVariables(object):
         return final_hiv_status_date
 
     def prepare_previous_status_date_and_awareness(self):
-        """Prepare prev_result, prev_result_date, and prev_result_known."""
-        if self.recorded_hiv_result == POS:
-            self.prev_result = POS
-            self.prev_result_date = self.recorded_hiv_result_date
-            self.prev_result_known = YES
-        elif self.recorded_hiv_result == NEG:
-            self.prev_result = NEG
-            self.prev_result_date = self.recorded_hiv_result_date
-            self.prev_result_known = YES
-        elif self.result_recorded == POS:
-            self.prev_result = POS
-            self.prev_result_date = self.result_recorded_date
-            self.prev_result_known = YES
-        elif self.result_recorded == NEG:
-            self.prev_result = NEG
-            self.prev_result_date = self.result_recorded_date
-            self.prev_result_known = YES
-        else:
-            self.prev_result = np.nan
-            self.prev_result_date = pd.NaT
-            self.prev_result_known = np.nan
+        """Prepare prev_result, prev_result_date, and prev_result_known.
+        * Get the POS prev_result or the NEG result.
+        * If final and prev are discordant and prev_results_discordant, select the
+          prev_result that equals the final result
+        """
+        self.update_prev_result_if(POS)
+        if pd.isnull(self.prev_result):
+            self.update_prev_result_if(NEG)
+        if self.prev_results_discordant and self.final_hiv_status != self.prev_result:
+            self.update_prev_result_if(self.final_hiv_status)
+        if pd.isnull(self.prev_result):
+            self.update_prev_result_if(np.nan)
         self.previous_status_date_and_awareness_exceptions()
+
+    @property
+    def prev_results_discordant(self):
+        if pd.notnull(self.result_recorded) and pd.notnull(self.recorded_hiv_result):
+            return self.result_recorded != self.recorded_hiv_result
+        return False
+
+    def update_prev_result_if(self, result):
+        """Set """
+        if self.recorded_hiv_result == result:
+            self.prev_result = result
+            self.prev_result_date = self.recorded_hiv_result_date
+            self.prev_result_known = YES
+        elif self.result_recorded == result:
+            self.prev_result = result
+            self.prev_result_date = self.result_recorded_date
+            self.prev_result_known = YES
+        elif pd.isnull(result):
+            self.prev_result = np.nan
+            self.prev_result_date = np.nan
+            self.prev_result_known = np.nan
 
     def previous_status_date_and_awareness_exceptions(self):
         """Overwrite invalid result sequence and/or derive from arv status if possible."""

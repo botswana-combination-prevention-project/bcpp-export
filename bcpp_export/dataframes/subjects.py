@@ -13,8 +13,10 @@ from ..constants import gender, hiv_options, tf, yes_no, SUBJECT_IDENTIFIER, HOU
 from ..datetime_to_date import datetime_to_date
 from ..derived_variables import DerivedVariables
 
+from .csv_export_mixin import CsvExportMixin
 
-class Subjects(object):
+
+class Subjects(CsvExportMixin):
 
     """A class to generate a dataset of bcpp subject data for a given survey year.
 
@@ -28,7 +30,8 @@ class Subjects(object):
 
     """
 
-    def __init__(self, survey_name, merge_on=None, add_identity256=None):
+    def __init__(self, survey_name, merge_on=None, add_identity256=None, **kwargs):
+        super(Subjects, self).__init__(**kwargs)
         self.merge_on = merge_on or HOUSEHOLD_MEMBER
         self.add_identity256 = True if add_identity256 is True else False
         if self.merge_on not in (SUBJECT_IDENTIFIER, HOUSEHOLD_MEMBER):
@@ -58,14 +61,6 @@ class Subjects(object):
             self.map_edc_responses_to_numerics()
             self.add_derived_columns()
         return self._results
-
-    def to_csv(self, path=None, columns=None):
-        self.results.to_csv(
-            path_or_buf=os.path.expanduser(path or '~/bcpp_export_subjects.csv'),
-            na_rep='',
-            encoding='utf8',
-            date_format='%Y-%m-%d %H:%M:%S',
-            columns=columns)
 
     def merge_dataframes(self):
         """Left Merge all dataframes starting with subject_consent into

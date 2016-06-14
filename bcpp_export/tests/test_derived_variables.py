@@ -148,8 +148,8 @@ class TestDerivedVariables(TestCase):
         self.assertEqual(obj.prev_result_date, date(2015, 1, 7))
         self.assertEqual(obj.final_hiv_status_date, date(2016, 1, 7))
 
-    def test_prev_result_neg2(self):
-        """Assert prev_result NEG from recorded_hiv_result, ignores result_recorded."""
+    def test_prev_result_pos2(self):
+        """Assert prev_result POS if recorded_hiv_result, result_recorded are discordant."""
         self.row.update(
             today_hiv_result=POS,
             today_hiv_result_date=date(2016, 1, 7),
@@ -160,8 +160,25 @@ class TestDerivedVariables(TestCase):
         )
         obj = DerivedVariables(self.row)
         self.assertEqual(obj.prev_result_known, YES)
+        self.assertEqual(obj.prev_result, POS)
+        self.assertEqual(obj.prev_result_date, date(2014, 1, 7))
+        self.assertEqual(obj.final_hiv_status_date, date(2014, 1, 7))
+
+    def test_prev_result_neg2(self):
+        """Assert prev_result NEG if recorded_hiv_result, result_recorded are discordant."""
+        self.row.update(
+            today_hiv_result=POS,
+            today_hiv_result_date=date(2016, 1, 7),
+            recorded_hiv_result=NEG,
+            recorded_hiv_result_date=date(2015, 1, 7),
+            result_recorded=NEG,
+            result_recorded_date=date(2014, 1, 7)
+        )
+        obj = DerivedVariables(self.row)
+        self.assertEqual(obj.prev_result_known, YES)
         self.assertEqual(obj.prev_result, NEG)
         self.assertEqual(obj.prev_result_date, date(2015, 1, 7))
+        self.assertEqual(obj.final_hiv_status, POS)
         self.assertEqual(obj.final_hiv_status_date, date(2016, 1, 7))
 
     def test_prev_result_flips_if_absurd1(self):

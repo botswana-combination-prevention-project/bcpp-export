@@ -15,6 +15,7 @@ from ..datetime_to_date import datetime_to_date
 from ..enrolled import enrolled
 from ..household_refused import household_refused
 
+from .csv_export_mixin import CsvExportMixin
 from .participation_status import (
     ParticipationStatus, ENROLLED, ABSENT, REFUSED, BHS_INELIGIBLE, DECEASED,
     UNKNOWN, MOVED, UNDECIDED)
@@ -22,9 +23,10 @@ from .participation_status import (
 style = color_style()
 
 
-class Members(object):
+class Members(CsvExportMixin):
 
-    def __init__(self, survey_name, subjects=None):
+    def __init__(self, survey_name, subjects=None, **kwargs):
+        super(Members, self).__init__(**kwargs)
         self.survey_name = survey_name
         try:
             self.subjects = pd.DataFrame() if subjects.empty else subjects

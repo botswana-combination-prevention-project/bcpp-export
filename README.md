@@ -4,27 +4,77 @@
 
 Export analysis datasets of Plot, Household, Enumeration and Participants data from the "BCPP" Edc.
 
-## Subjects
-###Usage
+From the python shell
 
-Note: If you are also producing the Plot, Household, and Enumeration files, export the Subjects CSV file from the `Households` class instead as the `Household` class calls the `Subjects` class. See section below on `Households`
+    from bcpp_export.dataframes.combined_data_frames import CombinedDataFrames
+    dfs = CombinedDataFrames('bcpp-year-1')
+    dfs.to_csv()    
 
-    from bcpp_export.subjects import Subjects
+.. or, if you wish to inspect the individual objects first:
+
+    from bcpp_export.dataframes.load_all import load_all
+    from bcpp_export.dataframes.combined_data_frames import CombinedDataFrames
+
+    objects = load_all('bcpp-year-1')
+    members = objects.get('members_object')
+    subjects = objects.get('subjects_object')
+    residences = objects.get('residences_object')
+
+    # then when you are ready ...    
+    dfs = CombinedDataFrames('bcpp-year-1', **objects)
+    dfs.to_csv()    
+
+Each object contains dataframes. The important ones are: 
     
-    s = Subjects('bcpp-year-1', merge_on='household_member')
-    
-    # export to a csv file, default is "~/bcpp_export_subjects.csv"
-    s.to_csv()
-    
-The exported dataframe is `pandas` dataframe:
+    df_members = members.results  # all enumerated residents
+    df_subjects = subjects.results  # all participating residents
+    df_residences = residences.residences  # merge of household and plot info
+    df_plots = residences.plots
+    df_housholds = residences.households
 
-    s.results
+Each dataframe can be written to CSV as can any pandas dataframe:
+
+    df_members = members.results
+    df_members.to_csv('~/tmp/members.csv', index=False)
+
+But each object can help with exporting the dataframe to CSV by setting a few defaults before exporting:
+
+     members.to_csv()
+     # creates ~/bcpp_export_<YYYYMMDD>_members.csv
+     
+You can change the target folder:
+
+    members.to_csv(export_folder='~/Documents/bcpp/exports')
+    # creates ~/Documents/bcpp/exports/bcpp_export_<YYYYMMDD>_members.csv
+
+The dataframe exported is filtered by `pairs` and intervention `arms`. The default is set on the class attributes:
+
+    default_export_pairs = (1, 15)
+    default_export_arms = (INTERVENTION, )
     
-The exported dataframe, '`s.results` is a merge of all dataframes. Merge is a LEFT merge on `household_member`.
+But you can change this when calling `to_csv`, for example:
 
-All dataframes are `pandas` dataframes. All dataframes are prefixed with `df_` with the exception of `results`.
+     from bcpp_export.dataframes.csv_export_mixin import INTERVENTION, NON_INTERVENTION 
+     
+     members.to_csv(export_arms=(INTERVENTION, NON_INTERVENTION), export_pairs=(1, 7))
 
-Uses BCPP Edc 1.11.117, see requirements.txt.
+ If you wanted to see the filtered dataframe:
+ 
+     filtered_df = members.filtered_export_dataframe(export_arms=(INTERVENTION, NON_INTERVENTION), export_pairs=(1, 3))
+     filtered_df.groupby('pair').size()
+     pair
+        1      320
+        2      233
+        3     1009
+     filtered_df.groupby('intervention').size()
+     intervention
+        0     800
+        1     762
+
+Also:
+* Default pd.merge is a LEFT merge on `household_member`.
+* Attributes of "private" dataframes are prefixed with `df_` 
+* Uses BCPP Edc 1.11.117, see requirements.txt.
 
 ## identity256
 The dataframes are passed `django` model `values_list`. Encrypted field values (e.g. PII) are not decrypted by `django` for `values_lists`. To include a `sha256` representation of the personal identifier specify `add_identity256=True` when instantiating the `Subjects` class. Ensure the settings attribute `KEYPATH` points to the valid encryption keys. 
@@ -33,78 +83,9 @@ The dataframes are passed `django` model `values_list`. Encrypted field values (
 
     >>> s = Subjects('bcpp-year-1', merge_on='household_member', add_identity256=True)
     >>> s.results['identity256'][0] = '6d24639a6bd16765f3518d2e67146eb5950a7a05b6c8956e639423ac1042da74'
-    
-## Households
-    
-### Usage
-    
-    from bcpp_export.households import Households
-    
-    h = Households('bcpp-year-1', merge_subjects_on='household_member', add_identity256=True)
 
-write each dataframe to csv individually
+## Other Examples
 
-    h.to_csv('plots')  # creates ~/bcpp_export_plots.csv
-    h.to_csv('households')  # creates ~/bcpp_export_households.csv
-    h.to_csv('members')  # creates ~/bcpp_export_members.csv
-    h.to_csv('subjects')  # creates ~/bcpp_export_subjects.csv
-    
-or write all in one call
-
-    h.to_csv('all')  # creates all CSV files listed above
-
-or write all and limit the columns exported as defined in a dictionary like the one in `bcpp_export.columns`:
-
-    from bcpp_export.columns import columns
-    
-    h.to_csv('all', columns=columns, index=False)  # creates all CSV files listed above
-
-
-## Examples
-
-### Select data just for CPC communities from pairs 1 to 13
-
-Using the CSV files created above, select only those rows from the intervention (CPC) communities in pairs 1-13.
-
-    import os
-    import pandas as pd
-
-    options = dict(
-        na_rep='',
-        encoding='utf8',
-        date_format='%Y-%m-%d %H:%M:%S')
-
-    dataset_names = ['plots', 'households', 'members', 'subjects']
-
-    for dataset_name in dataset_names:
-        df = pd.read_csv(os.path.expanduser('~/bcpp_export_{}.csv'.format(dataset_name)))
-        df1 = df[(df['pair'] <= 13) & (df['intervention'] == 1)]
-        name = '{}_cpc_1-13'.format(dataset_name)
-        path_or_buf=os.path.expanduser('~/bcpp_export_{}_cpc_1-13.csv'.format(dataset_name))
-        df1.to_csv(path_or_buf=path_or_buf, **options)
-        
-... creates:
-
-    ~/bcpp_export_plots_cpc_1-13.csv
-    ~/bcpp_export_households_cpc_1-13.csv
-    ~/bcpp_export_members_cpc_1-13.csv
-    ~/bcpp_export_subjects_cpc_1-13.csv
-
-
-### Households enumerated but not enrolled
-
-    from bcpp_export.constants import YES, NO
-
-    df = pd.read_csv(os.path.expanduser('~/bcpp_export_households.csv')
-    df[(df['enrolled'] == NO) & (df['enumerated'] == YES)].count()
-
-### Households enumerated and enrolled
-
-    from bcpp_export.constants impot YES, NO
-
-    df = pd.read_csv(os.path.expanduser('~/bcpp_export_households.csv')
-    df[(df['enrolled'] == YES) & (df['enumerated'] == YES)].count()  # same as just enrolled
-    
 ### Add column based on external viral load data
 
     import pandas as pd

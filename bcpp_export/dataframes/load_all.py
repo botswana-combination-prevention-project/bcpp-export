@@ -50,6 +50,6 @@ def load_all(survey=None):
     end_message(dte_start)
 
     td = (datetime.today() - dte)
-    sys.stdout.write(style.SQL_FIELD('All done. {}\n\n'.format(divmod(td.days * 86400 + td.seconds, 60))))
+    sys.stdout.write(style.SQL_FIELD('All done. {} minutes {} seconds\n\n\n'.format(*divmod(td.days * 86400 + td.seconds, 60))))
 
     return {'members_object': members, 'subjects_object': subjects, 'residences_object': residences}

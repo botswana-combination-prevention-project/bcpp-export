@@ -80,6 +80,19 @@ Also:
 * Attributes of "private" dataframes are prefixed with `df_` 
 * Uses BCPP Edc 1.11.117, see requirements.txt.
 
+## Example for CDC Export
+    
+    from bcpp_export.dataframes import load_all, CDCDataFrames
+    
+    objects = load_all()
+    dfs = CDCDataFrames('bcpp-year-1', **objects)
+    dfs.to_csv()
+    
+or just:
+
+    dfs = CDCDataFrames('bcpp-year-1')
+    dfs.to_csv()
+
 ## identity256
 The dataframes are passed `django` model `values_list`. Encrypted field values (e.g. PII) are not decrypted by `django` for `values_lists`. To include a `sha256` representation of the personal identifier specify `add_identity256=True` when instantiating the `Subjects` class. Ensure the settings attribute `KEYPATH` points to the valid encryption keys. 
     

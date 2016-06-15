@@ -74,7 +74,3 @@ class TestEnumerated(TestCase, BcppMixin):
         self.assertEqual(enumerated(members, self.row), YES)
         members = pd.DataFrame()
         self.assertTrue(pd.isnull(enumerated(members, self.row)))
-
-    def test_removes_members_if_household_refused(self):
-        
-        

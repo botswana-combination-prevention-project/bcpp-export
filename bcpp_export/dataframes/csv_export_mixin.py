@@ -1,4 +1,5 @@
 import os
+import sys
 
 from datetime import date
 
@@ -36,17 +37,19 @@ class CsvExportMixin(object):
             columns = self.get_export_columns(name, columns_list=kwargs.get('columns'))
             df = getattr(self, name)
             df = self.filtered_export_dataframe(df, **kwargs)
+            path_or_buf = os.path.expanduser(
+                kwargs.get('path_or_buf') or
+                os.path.join(export_folder, self.default_filename_template.format(
+                    timestamp=date.today().strftime('%Y%m%d'), datasetname=name)))
             options = dict(
-                path_or_buf=os.path.expanduser(
-                    kwargs.get('path_or_buf') or
-                    os.path.join(export_folder, self.default_filename_template.format(
-                        timestamp=date.today().strftime('%Y%m%d'), datasetname=name))),
+                path_or_buf=path_or_buf,
                 na_rep='',
                 encoding='utf8',
                 date_format=kwargs.get('date_format', '%Y-%m-%d %H:%M:%S'),
                 index=kwargs.get('index', False),
                 columns=columns.get(name))
             self._to_csv(df, **options)
+            sys.stdout.write(' (*) Exported CSV file \'{}\'\n'.format(path_or_buf))
 
     def _to_csv(self, df, **options):
         df.to_csv(**options)

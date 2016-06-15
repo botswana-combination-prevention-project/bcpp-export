@@ -1,13 +1,19 @@
+import hashlib
 import pandas as pd
 import os
+import sys
 
-from datetime import date
+from datetime import date, datetime, timedelta
 from bcpp_export import urls  # DO NOT DELETE
 from bcpp_export.constants import YES, POS
 from .csv_export_mixin import CsvExportMixin
 from .members import Members
 from .residences import Residences
 from .subjects import Subjects
+from django.core.management.color import color_style
+from bcpp_export.identity256 import identity256
+
+style = color_style()
 
 
 class CombinedDataFrames(CsvExportMixin):
@@ -38,6 +44,7 @@ class CombinedDataFrames(CsvExportMixin):
         self.obj_residences = residences_object or Residences(
             self.survey_name, subjects=self.subjects, members=self.members)
         self.plots = self.obj_residences.plots
+        self.households = self.obj_residences.households
         self.residences = self.obj_residences.residences
         residences_columns = [
             'household_structure', 'household_consented', 'household_log_status', 'household_log_date',
@@ -76,7 +83,7 @@ class CDCDataFrames(CombinedDataFrames):
 
     default_filename_template = 'bcpp_export_{datasetname}_{timestamp}.csv'
 
-    export_dataset_names = ['plots', 'members', 'subjects']
+    export_dataset_names = ['plots', 'households', 'members', 'subjects']
 
     plots_columns = ['community', 'confirmed', 'enrolled', 'plot_identifier', 'plot_status']
 
@@ -93,3 +100,25 @@ class CDCDataFrames(CombinedDataFrames):
         'gender', 'identity', 'identity256', 'pregnant', 'prev_result_known', 'prev_result',
         'prev_result_date', 'referred', 'self_reported_result', 'subject_identifier',
         'survey', 'timestamp', 'vl_drawn', 'vl_result']
+
+    def __init__(self, survey_name, export_now=None, **kwargs):
+        super(CDCDataFrames, self).__init__(survey_name, **kwargs)
+        add_identity256 = kwargs.get('add_identity256', True)
+        if add_identity256:
+            self.add_identity256()
+        else:
+            sys.stdout.write(style.WARNING('WARNING! Not adding column \'identity256\'.\n'))
+        if kwargs.get('export_now'):
+            sys.stdout.write(style.NOTICE('Exporting {} to CSV.\n'.format(self.export_dataset_names)))
+            self.to_csv()
+            sys.stdout.write(style.SQL_FIELD('Done.\n'))
+
+    def add_identity256(self):
+        sys.stdout.write(style.NOTICE('Adding column \'identity256\' to subjects dataframe.\n'
+                                      'This may take a few minutes ...\n'))
+        dte_start = datetime.today()
+        self.subjects['identity256'] = self.subjects.apply(
+            lambda row: identity256(row, column_name='identity'), axis=1)
+        td = (datetime.today() - dte_start)
+        sys.stdout.write(style.SQL_FIELD('Done. {} minutes {} seconds\n'.format(
+            *divmod(td.days * 86400 + td.seconds, 60))))

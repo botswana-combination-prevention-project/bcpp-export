@@ -30,7 +30,8 @@ def load_all(survey=None):
 
     def end_message(dte_start):
         td = (datetime.today() - dte_start)
-        sys.stdout.write(style.SQL_FIELD('Done. {} minutes {} seconds\n'.format(*divmod(td.days * 86400 + td.seconds, 60))))
+        sys.stdout.write(style.SQL_FIELD('Done. {} minutes {} seconds\n'.format(
+            *divmod(td.days * 86400 + td.seconds, 60))))
 
     survey = survey or 'bcpp-year-1'
     dte = datetime.today()

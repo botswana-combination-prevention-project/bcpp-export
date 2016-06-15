@@ -7,12 +7,12 @@ from edc.map.classes import site_mappers
 from bhp066.apps.bcpp_household.mappers.central_server_mapper import CentralServerMapper
 from bhp066.apps.bcpp.app_configuration.classes import bcpp_app_configuration
 
-site_lab_profiles.autodiscover()
-site_mappers.autodiscover()
-admin.autodiscover()
+# site_lab_profiles.autodiscover()
+#site_mappers.autodiscover()
+# admin.autodiscover()
 
-site_mappers.registry['digawana'] = {}
-site_mappers.get_current_mapper().verify_survey_dates()
+#site_mappers.registry['digawana'] = {}
+#site_mappers.get_current_mapper().verify_survey_dates()
 
 APP_NAME = 'bcpp_export'
 

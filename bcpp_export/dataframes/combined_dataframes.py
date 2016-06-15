@@ -17,7 +17,7 @@ class CombinedDataFrames(CsvExportMixin):
 
     For example:
         # all from scratch for pairs 1-13 only
-        dfs = CombinedDataFrames('bcpp-year-1', pair_range=(1, 13))
+        dfs = CombinedDataFrames('bcpp-year-1', export_pairs=range(1, 13))
 
         # if instances members, subjects, residences already exist
         dfs = CombinedDataFrames(
@@ -35,7 +35,8 @@ class CombinedDataFrames(CsvExportMixin):
         self.subjects = self.obj_subjects.results
         self.obj_members = members_object or Members(self.survey_name, subjects=self.subjects)
         self.members = self.obj_members.results
-        self.obj_residences = residences_object or Residences(self.survey_name, subjects=self.subjects, members=self.members)
+        self.obj_residences = residences_object or Residences(
+            self.survey_name, subjects=self.subjects, members=self.members)
         self.plots = self.obj_residences.plots
         self.residences = self.obj_residences.residences
         residences_columns = [
@@ -69,3 +70,26 @@ class CombinedDataFrames(CsvExportMixin):
             'subjects_interviewed_known_pos': len(
                 subjects[subjects['prev_result'] == POS & subjects['prev_result_known'] == YES]),
         }
+
+
+class CDCDataFrames(CombinedDataFrames):
+
+    default_filename_template = 'bcpp_export_{datasetname}_{timestamp}.csv'
+
+    export_dataset_names = ['plots', 'members', 'subjects']
+
+    plots_columns = ['community', 'confirmed', 'enrolled', 'plot_identifier', 'plot_status']
+
+    households_columns = [
+        'community', 'enrolled', 'enumerated', 'household_identifier', 'plot_identifier', 'survey']
+
+    members_columns = [
+        'able_to_participate', 'age_in_years', 'community', 'enrolled', 'gender',
+        'household_identifier', 'plot_identifier', 'survey']
+
+    subjects_columns = [
+        'age_in_years', 'arv_clinic', 'cd4_date', 'cd4_tested', 'cd4_value',
+        'circumcised', 'community', 'consent_date', 'final_arv_status', 'final_hiv_status',
+        'gender', 'identity', 'identity256', 'pregnant', 'prev_result_known', 'prev_result',
+        'prev_result_date', 'referred', 'self_reported_result', 'subject_identifier',
+        'survey', 'timestamp', 'vl_drawn', 'vl_result']

@@ -49,19 +49,19 @@ You can change the target folder:
 
 The dataframe exported is filtered by `pairs` and intervention `arms`. The default is set on the class attributes:
 
-    default_export_pairs = (1, 15)
+    default_export_pairs = range(1, 16)
     default_export_arms = (INTERVENTION, )
     
 But you can change this when calling `to_csv`, for example:
 
      from bcpp_export.dataframes.csv_export_mixin import INTERVENTION, NON_INTERVENTION 
      
-     members.to_csv(export_arms=(INTERVENTION, NON_INTERVENTION), export_pairs=(1, 7))
+     members.to_csv(export_arms=(INTERVENTION, NON_INTERVENTION), export_pairs=range(1, 8))
 
- If you wanted to see the filtered dataframe:
+ If you wanted to see the filtered dataframe, call `filtered_export_dataframe` directly:
  
      filtered_df = members.filtered_export_dataframe(
-         export_arms=(INTERVENTION, NON_INTERVENTION), export_pairs=(1, 3))
+         export_arms=(INTERVENTION, NON_INTERVENTION), export_pairs=range(1, 4))
      filtered_df.groupby('pair').size()
 
      pair

@@ -5,7 +5,6 @@ import pandas as pd
 
 from django.test.testcases import TestCase
 
-from bcpp_export.enumerated import enumerated
 from bcpp_export.derived_variables import DerivedVariables
 from bcpp_export.constants import (
     NEG, POS, UNK, YES, IND, NAIVE, NO, DEFAULTER, edc_ART_PRESCRIPTION, ON_ART, SUBJECT_IDENTIFIER)

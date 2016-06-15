@@ -27,7 +27,6 @@ class Subjects(CsvExportMixin):
         from bcpp_export.dataframes.subjects import Subjects
         s = Subjects('bcpp-year-1')
         s.to_csv()
-
     """
 
     def __init__(self, survey_name, merge_on=None, add_identity256=None, **kwargs):

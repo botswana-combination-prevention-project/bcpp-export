@@ -1,10 +1,18 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
-
+.pydevproject
+.DS_Store
+.project
+.settings
+sas/*
+analysis/*
+test-*
+db.sqlite3
+etc/*
 # C extensions
 *.so
-
+getresults_receive/.DS_Store
 # Distribution / packaging
 .Python
 env/
@@ -55,3 +63,8 @@ docs/_build/
 
 # PyBuilder
 target/
+
+# Keys
+*.pem
+*.key
+

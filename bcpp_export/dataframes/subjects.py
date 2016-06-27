@@ -7,7 +7,9 @@ from bcpp_export import urls  # DO NOT DELETE
 from bhp066.apps.bcpp_subject.models import (
     SubjectReferral, SubjectConsent, Circumcision, ElisaHivResult, HivCareAdherence, HivResult,
     HivResultDocumentation, HivTestReview, HivTestingHistory, Pima, ReproductiveHealth,
-    ResidencyMobility, SubjectVisit)
+    ResidencyMobility, SubjectVisit, HicEnrollment)
+from bhp066.apps.bcpp_clinic.models.clinic_consent import ClinicConsent
+from bhp066.apps.bcpp_lab.models import SubjectRequisition
 
 from ..constants import gender, hiv_options, tf, yes_no, SUBJECT_IDENTIFIER, HOUSEHOLD_MEMBER, PLOT_IDENTIFIER
 from ..datetime_to_date import datetime_to_date
@@ -37,6 +39,8 @@ class Subjects(CsvExportMixin):
             raise TypeError(
                 'Invalid merge_on column. Expected one of {}.'.format((SUBJECT_IDENTIFIER, HOUSEHOLD_MEMBER)))
         self._circumcised = pd.DataFrame()
+        self._clinic_consents = pd.DataFrame()
+        self._hic_enrollment = pd.DataFrame()
         self._hiv_care_adherence = pd.DataFrame()
         self._hiv_result_documentation = pd.DataFrame()
         self._hiv_test_review = pd.DataFrame()
@@ -49,6 +53,7 @@ class Subjects(CsvExportMixin):
         self._subject_households = pd.DataFrame()
         self._subject_pimas = pd.DataFrame()
         self._subject_referrals = pd.DataFrame()
+        self._subject_requisitions = pd.DataFrame()
         self._today_hiv_result = pd.DataFrame()
         self._elisa_hiv_result = pd.DataFrame()
         self.survey_name = survey_name
@@ -373,3 +378,71 @@ class Subjects(CsvExportMixin):
             self._subject_pimas['cd4_date'] = self._subject_pimas.apply(
                 lambda row: datetime_to_date(row['cd4_date']), axis=1)
         return self._subject_pimas
+
+    @property
+    def df_hic_enrollment(self):
+        """Return a dataframe of a selection of the subject's Hic enrollment status.
+
+        This dataframe is not used for _results"""
+        if self._hic_enrollment.empty:
+            columns = ['subject_visit__household_member__registered_subject__subject_identifier',
+                       'subject_visit__household_member',
+                       'hic_permission', 'permanent_resident', 'intend_residency', 'household_residency',
+                       'citizen_or_spouse']
+            qs = HicEnrollment.objects.values_list(*columns).filter(
+                subject_visit__household_member__household_structure__survey__survey_slug=self.survey_name)
+            df = pd.DataFrame(list(qs), columns=columns)
+            self._hic_enrollment = df.rename(columns={
+                'subject_visit__household_member__registered_subject__subject_identifier': SUBJECT_IDENTIFIER,
+                'subject_visit__household_member': HOUSEHOLD_MEMBER})
+        return self._hic_enrollment
+
+    @property
+    def df_clinic_consent(self):
+        """Return a dataframe of a selection of the subjects consented at the clinic for RDB.
+
+        This dataframe is not used for _results"""
+        if self._clinic_consents.empty:
+            columns = [SUBJECT_IDENTIFIER, 'id', 'citizen', 'dob', 'gender', 'consent_datetime',
+                       'identity', 'identity_type', 'household_member_id', 'registered_subject_id',
+                       'community', 'legal_marriage']
+            qs = ClinicConsent.objects.values_list(*columns).filter(
+                household_member__household_structure__survey__survey_slug=self.survey_name)
+            df = pd.DataFrame(list(qs), columns=columns)
+            self._clinic_consents = df.rename(columns={
+                'household_member_id': HOUSEHOLD_MEMBER,
+                'id': 'consent',
+                'legal_marriage': 'spouse_of_citizen',
+                'registered_subject_id': 'registered_subject',
+                'consent_datetime': 'consent_date',
+            })
+            self._clinic_consents['consent_date'] = self._clinic_consents.apply(
+                lambda row: datetime_to_date(row['consent_date']), axis=1)
+        return self._clinic_consents
+
+    @property
+    def df_subject_requisitions(self):
+
+        """Return a dataframe of a selection of the subject's pima/cd4 values.
+
+        To get all with a RDB:
+            subjects.df_subject_requisitions.query('panel == \'Research Blood Draw\'')
+
+        This dataframe is not used for _results"""
+        if self._subject_requisitions.empty:
+            columns = ['subject_visit__household_member__registered_subject__subject_identifier',
+                       'subject_visit__household_member', 'panel__name', 'is_drawn',
+                       'requisition_identifier', 'requisition_datetime', 'specimen_identifier',
+                       'drawn_datetime', 'reason_not_drawn']
+            qs = SubjectRequisition.objects.values_list(*columns).filter(
+                subject_visit__household_member__household_structure__survey__survey_slug=self.survey_name)
+            df = pd.DataFrame(list(qs), columns=columns)
+            self._subject_requisitions = df.rename(columns={
+                'subject_visit__household_member__registered_subject__subject_identifier': SUBJECT_IDENTIFIER,
+                'subject_visit__household_member': HOUSEHOLD_MEMBER,
+                'panel__name': 'panel'})
+#             self._subject_requisitions['requisition_datetime'] = self._subject_pimas.apply(
+#                 lambda row: datetime_to_date(row['requisition_datetime']), axis=1)
+#             self._subject_requisitions['drawn_datetime'] = self._subject_pimas.apply(
+#                 lambda row: datetime_to_date(row['drawn_datetime']), axis=1)
+        return self._subject_requisitions

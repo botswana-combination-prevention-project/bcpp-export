@@ -81,6 +81,8 @@ Also:
 * Uses BCPP Edc 1.11.117, see requirements.txt.
 
 ## Example for CDC Export
+
+Class `CDCDataFrames` is a sublcass of `CombinedDataFrames`. It will add columns `identity256` to the subjects dataframe, export a subset of columns for each dataframe. This class exports to CSV the plots, households, members and subjects dataframes.
     
     from bcpp_export.dataframes import load_all, CDCDataFrames
     

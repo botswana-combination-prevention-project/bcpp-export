@@ -25,7 +25,7 @@ from bhp066.apps.bcpp_subject.models import LabourMarketWages, Demographics, Edu
 
 from bcpp_export.constants import SUBJECT_IDENTIFIER, HOUSEHOLD_MEMBER
 
-from ..constants import yes_no
+from ..constants import hiv_options
 
 from .subjects import Subjects
 
@@ -51,7 +51,7 @@ class SubjectsCrio2017(Subjects):
         super(SubjectsCrio2017, self).__init__(survey_name, merge_on, add_identity256, **kwargs)
 
     def map_edc_responses_to_numerics(self):
-        self._results['employed'] = self._results['employed'].map(yes_no.get)
+        self._results['first_partner_hiv'] = self._results['first_partner_hiv'].map(hiv_options.get)
         super(SubjectsCrio2017, self).map_edc_responses_to_numerics()
 
     @property
@@ -59,7 +59,7 @@ class SubjectsCrio2017(Subjects):
         if self._labour_market_wages.empty:
             columns = ['subject_visit__household_member__registered_subject__subject_identifier',
                        'subject_visit__household_member',
-                       'employed', 'days_worked']
+                       'employed', 'days_worked', 'monthly_income', 'salary_payment']
             qs = LabourMarketWages.objects.values_list(*columns).filter(
                 subject_visit__household_member__household_structure__survey__survey_slug=self.survey_name)
             df = pd.DataFrame(list(qs), columns=columns)
@@ -67,7 +67,9 @@ class SubjectsCrio2017(Subjects):
                 'subject_visit__household_member__registered_subject__subject_identifier': SUBJECT_IDENTIFIER,
                 'subject_visit__household_member': HOUSEHOLD_MEMBER,
                 'employed': 'employed',
-                'days_worked': 'days_worked'})
+                'days_worked': 'days_worked',
+                'monthly_income': 'monthly_income',
+                'salary_payment': 'salary_payment'})
         return self._labour_market_wages
 
     @property

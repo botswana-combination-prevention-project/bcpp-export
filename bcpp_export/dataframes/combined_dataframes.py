@@ -147,6 +147,8 @@ class CDCDataFramesCroi2017(CDCDataFrames):
         'first_relationship',
         'length_residence'
         'marital_status',
+        'monthly_income',
+        'salary_payment',
     ]
 
     def get_subjects(self, merge_subjects_on, add_identity256):

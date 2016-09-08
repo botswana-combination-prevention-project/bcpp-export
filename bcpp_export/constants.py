@@ -41,6 +41,9 @@ hiv_options = {
     edc_IND: IND,
     edc_UNK: UNK,
     'not_answering': DWTA,
+    'positive': POS,
+    'negative': NEG,
+    'not_sure': UNK,
     None: np.nan}
 
 tf = {

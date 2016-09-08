@@ -142,13 +142,12 @@ class CDCDataFramesCroi2017(CDCDataFrames):
         'survey', 'timestamp', 'vl_drawn', 'vl_result'] + [
         'days_worked',
         'education',
-        'employed',
+        'working',
+        'job_type',
         'first_partner_hiv',
         'first_relationship',
         'length_residence'
         'marital_status',
-        'monthly_income',
-        'salary_payment',
     ]
 
     def get_subjects(self, merge_subjects_on, add_identity256):

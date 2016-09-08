@@ -92,14 +92,16 @@ class SubjectsCrio2017(Subjects):
         if self._education.empty:
             columns = ['subject_visit__household_member__registered_subject__subject_identifier',
                        'subject_visit__household_member',
-                       'education']
+                       'education', 'working', 'job_type']
             qs = Education.objects.values_list(*columns).filter(
                 subject_visit__household_member__household_structure__survey__survey_slug=self.survey_name)
             df = pd.DataFrame(list(qs), columns=columns)
             self._education = df.rename(columns={
                 'subject_visit__household_member__registered_subject__subject_identifier': SUBJECT_IDENTIFIER,
                 'subject_visit__household_member': HOUSEHOLD_MEMBER,
-                'education': 'education'})
+                'education': 'education',
+                'working': 'working',
+                'job_type': 'job_type'})
         return self._education
 
     @property

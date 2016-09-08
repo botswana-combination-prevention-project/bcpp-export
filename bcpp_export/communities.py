@@ -39,7 +39,7 @@ communities = {
 }
 
 communities_by_code = {}
-for name, community in communities.iteritems():
+for name, community in communities.items():
     communities_by_code.update({community.code: community})
 
 
@@ -58,4 +58,3 @@ def pair(row):
 
 def to_community(code):
     return communities_by_code.get(code).name
-    

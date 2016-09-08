@@ -46,6 +46,12 @@ class EdcModelToDataFrame(object):
                     pass
             elif add_columns_for == 'household_member':
                 columns.update({
+                    'household_member__household_structure__household__plot__plot_identifier':
+                    'plot_identifier'})
+                columns.update({
+                    'household_member__household_structure__household__plot__':
+                    'plot_identifier'})
+                columns.update({
                     'household_member__household_structure__household__plot__community':
                     'community'})
                 columns.update({

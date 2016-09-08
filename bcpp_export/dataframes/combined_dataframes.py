@@ -12,6 +12,7 @@ from .residences import Residences
 from .subjects import Subjects
 from django.core.management.color import color_style
 from bcpp_export.identity256 import identity256
+from bcpp_export.dataframes.subjects_crio2017 import SubjectsCrio2017
 
 style = color_style()
 
@@ -25,6 +26,8 @@ class CombinedDataFrames(CsvExportMixin):
         # all from scratch for pairs 1-13 only
         dfs = CombinedDataFrames('bcpp-year-1', export_pairs=range(1, 13))
 
+        dfs = CombinedDataFrames('bcpp-year-1', export_pairs=range(1, 15), add_identity256=True)
+
         # if instances members, subjects, residences already exist
         dfs = CombinedDataFrames(
             'bcpp-year-1', members_object=members, subjects_object=subjects, residences_object=residences)
@@ -37,7 +40,7 @@ class CombinedDataFrames(CsvExportMixin):
                  members_object=None, subjects_object=None, residences_object=None, **kwargs):
         super(CombinedDataFrames, self).__init__(**kwargs)
         self.survey_name = survey_name
-        self.obj_subjects = subjects_object or Subjects(self.survey_name, merge_subjects_on, add_identity256)
+        self.obj_subjects = subjects_object or self.get_subjects(merge_subjects_on, add_identity256)
         self.subjects = self.obj_subjects.results
         self.obj_members = members_object or Members(self.survey_name, subjects=self.subjects)
         self.members = self.obj_members.results
@@ -54,6 +57,9 @@ class CombinedDataFrames(CsvExportMixin):
             self.members, self.residences[residences_columns], how='left', on='household_structure')
         self.subjects = pd.merge(
             self.subjects, self.residences[residences_columns], how='left', on='household_structure')
+
+    def get_subjects(self, merge_subjects_on, add_identity256):
+        return Subjects(self.survey_name, merge_subjects_on, add_identity256)
 
     def validate(self):
         assert len(self.plots.query('enrolled == 1')) == len(pd.unique(self.subjects.plot_identifier.ravel()))
@@ -122,3 +128,26 @@ class CDCDataFrames(CombinedDataFrames):
         td = (datetime.today() - dte_start)
         sys.stdout.write(style.SQL_FIELD('Done. {} minutes {} seconds\n'.format(
             *divmod(td.days * 86400 + td.seconds, 60))))
+
+
+class CDCDataFramesCroi2017(CDCDataFrames):
+
+    export_dataset_names = ['subjects']
+
+    subjects_columns = [
+        'age_in_years', 'arv_clinic', 'cd4_date', 'cd4_tested', 'cd4_value',
+        'circumcised', 'community', 'consent_date', 'final_arv_status', 'final_hiv_status',
+        'gender', 'identity', 'identity256', 'pregnant', 'prev_result_known', 'prev_result',
+        'prev_result_date', 'referred', 'self_reported_result', 'subject_identifier',
+        'survey', 'timestamp', 'vl_drawn', 'vl_result'] + [
+        'days_worked',
+        'education',
+        'employed',
+        'first_partner_hiv',
+        'first_relationship',
+        'length_residence'
+        'marital_status',
+    ]
+
+    def get_subjects(self, merge_subjects_on, add_identity256):
+        return SubjectsCrio2017(self.survey_name, merge_subjects_on, add_identity256)

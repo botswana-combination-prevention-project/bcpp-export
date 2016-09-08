@@ -89,21 +89,24 @@ class Subjects(CsvExportMixin):
         self._results['cd4_tested'] = self._results['cd4_tested'].map(yes_no.get)
         self._results['circumcised'] = self._results['circumcised'].map(yes_no.get)
         self._results['citizen'] = self._results['citizen'].map(yes_no.get)
+        self._results['citizen_or_spouse'] = self._results['citizen_or_spouse'].map(tf.get)
+        self._results['elisa_hiv_result'] = self._results['elisa_hiv_result'].map(hiv_options.get)
         self._results['ever_taken_arv'] = self._results['ever_taken_arv'].map(yes_no.get)
+        self._results['gender'] = self._results['gender'].map(gender.get)
         self._results['has_tested'] = self._results['has_tested'].map(yes_no.get)
+        self._results['household_residency'] = self._results['household_residency'].map(tf.get)
+        self._results['intend_residency'] = self._results['intend_residency'].map(tf.get)
         self._results['on_arv'] = self._results['on_arv'].map(yes_no.get)
         self._results['other_record'] = self._results['other_record'].map(yes_no.get)
+        self._results['part_time_resident'] = self._results['part_time_resident'].map(tf.get)
         self._results['permanent_resident'] = self._results['permanent_resident'].map(yes_no.get)
         self._results['pregnant'] = self._results['pregnant'].map(yes_no.get)
-        self._results['referred'] = self._results['referred'].map(yes_no.get)
-        self._results['spouse_of_citizen'] = self._results['spouse_of_citizen'].map(yes_no.get)
-        self._results['gender'] = self._results['gender'].map(gender.get)
-        self._results['part_time_resident'] = self._results['part_time_resident'].map(tf.get)
         self._results['recorded_hiv_result'] = self._results['recorded_hiv_result'].map(hiv_options.get)
+        self._results['referred'] = self._results['referred'].map(yes_no.get)
         self._results['result_recorded'] = self._results['result_recorded'].map(hiv_options.get)
         self._results['self_reported_result'] = self._results['self_reported_result'].map(hiv_options.get)
+        self._results['spouse_of_citizen'] = self._results['spouse_of_citizen'].map(yes_no.get)
         self._results['today_hiv_result'] = self._results['today_hiv_result'].map(hiv_options.get)
-        self._results['elisa_hiv_result'] = self._results['elisa_hiv_result'].map(hiv_options.get)
 
     def add_derived_columns(self):
         attrnames = [
@@ -425,7 +428,7 @@ class Subjects(CsvExportMixin):
 
         """Return a dataframe of a selection of the subject's pima/cd4 values.
 
-        To get all with a RDB:
+        To get all with a RDB, for example:
             subjects.df_subject_requisitions.query('panel == \'Research Blood Draw\'')
 
         This dataframe is not used for _results"""

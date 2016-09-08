@@ -37,15 +37,24 @@ class CombinedDataFrames(CsvExportMixin):
     default_export_dataset_name = 'all'
 
     def __init__(self, survey_name, merge_subjects_on=None, add_identity256=None,
-                 members_object=None, subjects_object=None, residences_object=None, **kwargs):
+                 members_object=pd.DataFrame(), subjects_object=pd.DataFrame(),
+                 residences_object=pd.DataFrame(), **kwargs):
         super(CombinedDataFrames, self).__init__(**kwargs)
         self.survey_name = survey_name
-        self.obj_subjects = subjects_object or self.get_subjects(merge_subjects_on, add_identity256)
+        if not subjects_object.empty:
+            self.obj_subjects = subjects_object
+        else:
+            self.obj_subjects = self.get_subjects(merge_subjects_on, add_identity256)
         self.subjects = self.obj_subjects.results
-        self.obj_members = members_object or Members(self.survey_name, subjects=self.subjects)
+        if not members_object.empty:
+            self.obj_members = members_object
+        else:
+            self.obj_members = Members(self.survey_name, subjects=self.subjects)
         self.members = self.obj_members.results
-        self.obj_residences = residences_object or Residences(
-            self.survey_name, subjects=self.subjects, members=self.members)
+        if not residences_object.empty:
+            self.obj_residences = residences_object
+        else:
+            self.obj_residences = Residences(self.survey_name, subjects=self.subjects, members=self.members)
         self.plots = self.obj_residences.plots
         self.households = self.obj_residences.households
         self.residences = self.obj_residences.residences

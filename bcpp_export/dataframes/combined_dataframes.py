@@ -158,7 +158,7 @@ class CDCDataFramesCroi2017(CDCDataFrames):
         'job_type',
         'first_partner_hiv',
         'first_relationship',
-        'length_residence'
+        'length_residence',
         'marital_status',
     ]
 

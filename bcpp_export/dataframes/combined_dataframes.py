@@ -41,23 +41,26 @@ class CombinedDataFrames(CsvExportMixin):
                  residences_object=pd.DataFrame(), **kwargs):
         super(CombinedDataFrames, self).__init__(**kwargs)
         self.survey_name = survey_name
+        self.plots = pd.DataFrame()
+        self.households = pd.DataFrame()
         if not subjects_object.empty:
-            self.obj_subjects = subjects_object
+            self.subjects = subjects_object
         else:
             self.obj_subjects = self.get_subjects(merge_subjects_on, add_identity256)
-        self.subjects = self.obj_subjects.results
+            self.subjects = self.obj_subjects.results
+            self.subjects.to_csv('~/subjects_tmp.csv', index=False)
         if not members_object.empty:
-            self.obj_members = members_object
+            self.members = members_object
         else:
             self.obj_members = Members(self.survey_name, subjects=self.subjects)
-        self.members = self.obj_members.results
+            self.members = self.obj_members.results
         if not residences_object.empty:
-            self.obj_residences = residences_object
+            self.residences = residences_object
         else:
             self.obj_residences = Residences(self.survey_name, subjects=self.subjects, members=self.members)
-        self.plots = self.obj_residences.plots
-        self.households = self.obj_residences.households
-        self.residences = self.obj_residences.residences
+            self.plots = self.obj_residences.plots
+            self.households = self.obj_residences.households
+            self.residences = self.obj_residences.residences
         residences_columns = [
             'household_structure', 'household_consented', 'household_log_status', 'household_log_date',
             'confirmed', 'plot_status', 'plot_modified', 'selected', 'gps_lat',

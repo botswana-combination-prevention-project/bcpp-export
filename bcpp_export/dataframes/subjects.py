@@ -134,7 +134,7 @@ class Subjects(CsvExportMixin):
         if self._subject_consents.empty:
             columns = [SUBJECT_IDENTIFIER, 'id', 'citizen', 'dob', 'gender', 'consent_datetime',
                        'identity', 'identity_type', 'household_member_id', 'registered_subject_id',
-                       'community', 'legal_marriage']
+                       'community', 'legal_marriage', 'version']
             qs = SubjectConsent.objects.values_list(*columns).filter(
                 household_member__household_structure__survey__survey_slug=self.survey_name)
             df = pd.DataFrame(list(qs), columns=columns)
@@ -144,6 +144,7 @@ class Subjects(CsvExportMixin):
                 'legal_marriage': 'spouse_of_citizen',
                 'registered_subject_id': 'registered_subject',
                 'consent_datetime': 'consent_date',
+                'version': 'version',
             })
             self._subject_consents['consent_date'] = self._subject_consents.apply(
                 lambda row: datetime_to_date(row['consent_date']), axis=1)

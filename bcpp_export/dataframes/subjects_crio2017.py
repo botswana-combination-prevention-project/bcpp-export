@@ -3,8 +3,8 @@
 'bcpp_subject.Education.education'
 
 # Employment status - full; part-time; seasonal; student; retired; not working;
-'bcpp_subject.LabourMarketWages.employed'
-'bcpp_subject.LabourMarketWages.days_worked'
+'bcpp_subject.Education.working'
+'bcpp_subject.Education.job_type'
 
 # Relationship/Marital Status - single; cohab/married; divorced/separated; widowed
 'bcpp_subject.Demographics.marital_status'

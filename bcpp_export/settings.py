@@ -88,7 +88,7 @@ elif 'test' in sys.argv:  # TRAVIS
     }
 
 else:
-    # if remote, ssh -f -N -L 5000:127.0.0.1:3306 django@edc.bhp.org.bw
+    # if remote, ssh -f -N -L 5001:127.0.0.1:3306 django@edc.bhp.org.bw
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
@@ -96,7 +96,7 @@ else:
                 'read_default_file': os.path.join(ETC_PATH, 'default.cnf'),
             },
             'HOST': '127.0.0.1',
-            'PORT': '5000',
+            'PORT': '5001',
             'ATOMIC_REQUESTS': True,
         },
     }

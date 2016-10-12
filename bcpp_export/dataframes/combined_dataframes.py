@@ -115,9 +115,9 @@ class CDCDataFrames(CombinedDataFrames):
     subjects_columns = [
         'age_in_years', 'arv_clinic', 'cd4_date', 'cd4_tested', 'cd4_value',
         'circumcised', 'community', 'consent_date', 'final_arv_status', 'final_hiv_status',
-        'gender', 'identity', 'identity256', 'pregnant', 'prev_result_known', 'prev_result',
-        'prev_result_date', 'referred', 'self_reported_result', 'subject_identifier',
-        'survey', 'timestamp', 'vl_drawn', 'vl_result']
+        'final_hiv_status_date', 'gender', 'identity', 'identity256', 'pregnant',
+        'prev_result_known', 'prev_result', 'prev_result_date', 'referred', 'self_reported_result',
+        'subject_identifier', 'survey', 'timestamp', 'vl_drawn', 'vl_result']
 
     def __init__(self, survey_name, export_now=None, **kwargs):
         super(CDCDataFrames, self).__init__(survey_name, **kwargs)

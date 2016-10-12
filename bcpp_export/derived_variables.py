@@ -1,3 +1,5 @@
+import sys
+
 import numpy as np
 import pandas as pd
 
@@ -37,7 +39,11 @@ class DerivedVariables(object):
         self.today_hiv_result_date = row['today_hiv_result_date']
         if self.result_recorded_document == edc_ART_PRESCRIPTION:
             self.arv_evidence = YES
-        self.age_in_years = relativedelta(row['visit_date'], row['dob']).years
+        try:
+            self.age_in_years = relativedelta(row['visit_date'], row['dob']).years
+        except TypeError as e:
+            print('{} {}, {}, {}'.format(str(e), row[SUBJECT_IDENTIFIER], row['visit_date'], row['dob']))
+            self.age_in_years = -1
         self.timestamp = timezone.now()
         self.final_hiv_status = np.nan
         self.final_hiv_date = np.nan
@@ -166,9 +172,10 @@ class DerivedVariables(object):
             elif self.arv_evidence == YES and pd.isnull(self.on_arv) and pd.isnull(self.ever_taken_arv):
                 self.final_arv_status = ON_ART
             else:
-                raise TypeError('Cannot determine final_arv_status for {}. '
-                                'Got ever_taken_arv={}, on_arv={}, arv_evidence={}'.format(
-                                    self.subject_identifier, self.ever_taken_arv, self.on_arv, self.arv_evidence))
+                sys.stdout.write(
+                    'Cannot determine final_arv_status for {}. '
+                    'Got ever_taken_arv={}, on_arv={}, arv_evidence={}'.format(
+                        self.subject_identifier, self.ever_taken_arv, self.on_arv, self.arv_evidence))
 
     def prepare_documented_status_and_date(self):
         if self.recorded_hiv_result == POS:

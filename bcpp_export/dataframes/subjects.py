@@ -128,6 +128,16 @@ class Subjects(CsvExportMixin):
             self._results[attrname] = self._results.apply(
                 lambda row: getattr(DerivedVariables(row), attrname), axis=1)
 
+    def survey_sequence(self):
+        n = int(self.survey[-1:])
+        return [self.survey[:-1] + str(i) for i in range(1, n + 1)]
+
+    def subject_consents(self, columns):
+        subject_consents = SubjectConsent.objects.values_list(*columns).filter(
+            household_member__household_structure__survey__survey_slug__in=self.survey_sequence).exclude(
+                household_member__household_structure__household__plot__status='bcpp_clinic')
+        return subject_consents
+
     @property
     def df_subject_consents(self):
         """Return a dataframe of a selection of the subject's consent values."""
@@ -135,8 +145,7 @@ class Subjects(CsvExportMixin):
             columns = [SUBJECT_IDENTIFIER, 'id', 'citizen', 'dob', 'gender', 'consent_datetime',
                        'identity', 'identity_type', 'household_member_id', 'registered_subject_id',
                        'community', 'legal_marriage', 'version']
-            qs = SubjectConsent.objects.values_list(*columns).filter(
-                household_member__household_structure__survey__survey_slug=self.survey_name)
+            qs = self.subject_consents(columns)
             df = pd.DataFrame(list(qs), columns=columns)
             self._subject_consents = df.rename(columns={
                 'household_member_id': HOUSEHOLD_MEMBER,
@@ -160,9 +169,7 @@ class Subjects(CsvExportMixin):
                 'household_member__household_structure__household__household_identifier',
                 'household_member__household_structure__household__plot__plot_identifier',
                 'household_member__household_structure__survey__survey_slug']
-            qs = SubjectConsent.objects.values_list(*columns).filter(
-                household_member__household_structure__survey__survey_slug=self.survey_name).exclude(
-                household_member__household_structure__household__plot__status='bcpp_clinic')
+            qs = self.subject_consents(columns)
             df = pd.DataFrame(list(qs), columns=columns)
             df = df.rename(columns={
                 'household_member__household_structure': 'household_structure',
@@ -411,7 +418,7 @@ class Subjects(CsvExportMixin):
                        'identity', 'identity_type', 'household_member_id', 'registered_subject_id',
                        'community', 'legal_marriage']
             qs = ClinicConsent.objects.values_list(*columns).filter(
-                household_member__household_structure__survey__survey_slug=self.survey_name)
+                household_member__household_structure__survey__survey_slug__in=self.survey_name)
             df = pd.DataFrame(list(qs), columns=columns)
             self._clinic_consents = df.rename(columns={
                 'household_member_id': HOUSEHOLD_MEMBER,

@@ -129,8 +129,8 @@ class Subjects(CsvExportMixin):
                 lambda row: getattr(DerivedVariables(row), attrname), axis=1)
 
     def survey_sequence(self):
-        n = int(self.survey[-1:])
-        return [self.survey[:-1] + str(i) for i in range(1, n + 1)]
+        n = int(self.survey_name[-1:])
+        return [self.survey_name[:-1] + str(i) for i in range(1, n + 1)]
 
     def subject_consents(self, columns):
         subject_consents = SubjectConsent.objects.values_list(*columns).filter(

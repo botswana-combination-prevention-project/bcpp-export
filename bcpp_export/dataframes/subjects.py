@@ -408,28 +408,28 @@ class Subjects(CsvExportMixin):
                 'subject_visit__household_member': HOUSEHOLD_MEMBER})
         return self._hic_enrollment
 
-    @property
-    def df_clinic_consent(self):
-        """Return a dataframe of a selection of the subjects consented at the clinic for RDB.
-
-        This dataframe is not used for _results"""
-        if self._clinic_consents.empty:
-            columns = [SUBJECT_IDENTIFIER, 'id', 'citizen', 'dob', 'gender', 'consent_datetime',
-                       'identity', 'identity_type', 'household_member_id', 'registered_subject_id',
-                       'community', 'legal_marriage']
-            qs = ClinicConsent.objects.values_list(*columns).filter(
-                household_member__household_structure__survey__survey_slug__in=self.survey_name)
-            df = pd.DataFrame(list(qs), columns=columns)
-            self._clinic_consents = df.rename(columns={
-                'household_member_id': HOUSEHOLD_MEMBER,
-                'id': 'consent',
-                'legal_marriage': 'spouse_of_citizen',
-                'registered_subject_id': 'registered_subject',
-                'consent_datetime': 'consent_date',
-            })
-            self._clinic_consents['consent_date'] = self._clinic_consents.apply(
-                lambda row: datetime_to_date(row['consent_date']), axis=1)
-        return self._clinic_consents
+#     @property
+#     def df_clinic_consent(self):
+#         """Return a dataframe of a selection of the subjects consented at the clinic for RDB.
+# 
+#         This dataframe is not used for _results"""
+#         if self._clinic_consents.empty:
+#             columns = [SUBJECT_IDENTIFIER, 'id', 'citizen', 'dob', 'gender', 'consent_datetime',
+#                        'identity', 'identity_type', 'household_member_id', 'registered_subject_id',
+#                        'community', 'legal_marriage']
+#             qs = ClinicConsent.objects.values_list(*columns).filter(
+#                 household_member__household_structure__survey__survey_slug__in=self.survey_name)
+#             df = pd.DataFrame(list(qs), columns=columns)
+#             self._clinic_consents = df.rename(columns={
+#                 'household_member_id': HOUSEHOLD_MEMBER,
+#                 'id': 'consent',
+#                 'legal_marriage': 'spouse_of_citizen',
+#                 'registered_subject_id': 'registered_subject',
+#                 'consent_datetime': 'consent_date',
+#             })
+#             self._clinic_consents['consent_date'] = self._clinic_consents.apply(
+#                 lambda row: datetime_to_date(row['consent_date']), axis=1)
+#         return self._clinic_consents
 
     @property
     def df_subject_requisitions(self):

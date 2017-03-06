@@ -40,9 +40,11 @@ class DerivedVariables(object):
         if self.result_recorded_document == edc_ART_PRESCRIPTION:
             self.arv_evidence = YES
         try:
-            self.age_in_years = relativedelta(row['visit_date'], row['dob']).years
+            self.age_in_years = relativedelta(
+                row['visit_date'], row['dob']).years
         except TypeError as e:
-            print('{} {}, {}, {}'.format(str(e), row[SUBJECT_IDENTIFIER], row['visit_date'], row['dob']))
+            print('{} {}, {}, {}'.format(
+                str(e), row[SUBJECT_IDENTIFIER], row['visit_date'], row['dob']))
             self.age_in_years = -1
         self.timestamp = timezone.now()
         self.final_hiv_status = np.nan

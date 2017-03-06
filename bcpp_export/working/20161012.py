@@ -1,17 +1,17 @@
 import pandas as pd
 import numpy as np
-
+from bcpp_export.constants import hiv_options
 from bcpp_export.dataframes.longitudinal_subjects import LongitudinalSubjects
 
 pd.set_option('display.width', None)
 
 # load saved files (generated using bcpp_export)
 df_s1 = pd.read_csv('/Users/erikvw/Documents/bcpp/cdc/20161007/bcpp_export_year1_20161006_results.csv', low_memory=False)
-df_s1['timepoint'] = 'T0'
+df_s1['appointment__visit_definition__code'] = 'T0'
 df_s1 = df_s1.query('pair >= 1 and pair <= 12 and intervention == True').drop_duplicates('subject_identifier')
 
 df_s2 = pd.read_csv('/Users/erikvw/Documents/bcpp/cdc/20161007/bcpp_export_year2_20161006_results.csv', low_memory=False)
-df_s2 = df_s2.rename(columns={'appointment__visit_definition__code': 'timepoint'})
+# df_s2 = df_s2.rename(columns={'appointment__visit_definition__code': 'timepoint'})
 df_s2 = df_s2.query('pair >= 1 and pair <= 12 and intervention == True').drop_duplicates('subject_identifier')
 
 # merge to create  Y2 dataframe and run through class to calculate derived vars
@@ -32,7 +32,7 @@ subjects_columns = [
     'subject_identifier', 'timepoint', 'survey', 'pair', 'timestamp']
 
 # write final file
-path_or_buf_y2 = '/Users/erikvw/Documents/bcpp/cdc/20161007/df_tmp20161010E_y2.csv'
+path_or_buf_y2 = '/Users/erikvw/Documents/bcpp/cdc/20161007/df_tmp20161010F_y2.csv'
 df.to_csv(columns=subjects_columns, path_or_buf=path_or_buf_y2, index=False)
 
 df_s1 = pd.read_csv('/Users/erikvw/Documents/bcpp/cdc/20161007/bcpp_export_year1_20161006_results.csv', low_memory=False)
@@ -47,6 +47,70 @@ df_final = pd.concat([df_y1, df_y2])
 
 path_or_buf_final = '/Users/erikvw/Documents/bcpp/cdc/20161007/bcpp_subjects_20161012_pairs1-12.csv'
 df_final.to_csv(path_or_buf=path_or_buf_final, index=False)
+
+
+# jean
+df_jl = pd.read_csv('/Users/erikvw/Documents/bcpp/cdc/20161007/bcpp_subject_jean_y2_t1.csv', low_memory=True)
+df_jl['hiv_result_datetime'] = df_jl['hiv_result_datetime'].str[0:2] + '-' + df_jl['hiv_result_datetime'].str[2:5] + '-' + df_jl['hiv_result_datetime'].str[5:9]
+df_jl['hiv_result_datetime'] = pd.to_datetime(df_jl['hiv_result_datetime'])
+df_jl['prev_result_date'] = df_jl['prev_result_date'].str[0:2] + '-' + df_jl['prev_result_date'].str[2:5] + '-' + df_jl['prev_result_date'].str[5:9]
+df_jl['prev_result_date'] = pd.to_datetime(df_jl['prev_result_date'])
+df_jl = df_jl.rename(columns={
+    'hiv_result_datetime': 'final_hiv_status_date',
+    'Pair': 'pair',
+    'Intervention': 'intervention',
+    'survey_slug': 'survey'})
+
+arv_options_jl = {
+    'ARV naive': 1.0,
+    'ARV defaulter': 2.0,
+    'On ARVs': 3.0}
+
+intervention_options_jl = {
+    'CPC': 1.0,
+    'ECC': 0.0}
+
+df_jl['prev_result'] = df_jl['prev_result'].map(hiv_options.get)
+df_jl['final_arv_status'] = df_jl['final_arv_status'].map(arv_options_jl.get)
+df_jl['intervention'] = df_jl['intervention'].map(intervention_options_jl.get)
+
+['age_in_years',
+ 'arv_clinic',
+ 'cd4_date',
+ 'cd4_tested',
+ 'cd4_value',
+ 'circumcised',
+ 'community',
+ 'consent_date',
+ 'final_arv_status',
+ 'final_hiv_status',
+ 'final_hiv_status_date',
+ 'gender',
+ 'identity',
+ 'identity256',
+ 'pair',
+ 'pregnant',
+ 'prev_result',
+ 'prev_result_date',
+ 'prev_result_known',
+ 'referred',
+ 'self_reported_result',
+ 'subject_identifier',
+ 'survey',
+ 'timepoint',
+ 'timestamp']
+
+['final_arv_status',
+ 'final_hiv_status',
+ 'final_hiv_status_date',
+ 'pair',
+ 'prev_result',
+ 'prev_result_date',
+ 'prev_result_known',
+ 'subject_identifier',
+ 'survey',
+ 'timepoint']
+
 
 # viral load
 

@@ -7,7 +7,7 @@ df['community'] = df.apply(lambda row: community(row['community']), axis=1)
 
 Community = namedtuple('Community', 'code name pair intervention')
 
-htc_communities_map = {                                                    
+htc_communities_map = {
     'Bokaa': 'bokaa',
     'Digawana': 'digawana',
     'Gumare': 'gumare',
@@ -42,7 +42,7 @@ htc_communities_map = {
     'Tsetsebjwe': 'tsetsebjwe',
 }
 
-communities = {                              
+communities = {
     'bokaa': Community('17', 'bokaa', 4, False),
     'digawana': Community('12', 'digawana', 1, True),
     'gumare': Community('35', 'gumare', 13, True),

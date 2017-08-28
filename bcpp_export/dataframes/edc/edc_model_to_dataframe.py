@@ -14,12 +14,26 @@ class EdcModelToDataFrame(object):
         qs = queryset or model.objects.all()
         self.model = model or qs.model
         columns = self.columns(qs, add_columns_for)
-        qs = qs.values_list(*columns.keys()).filter(**query_filter)
-        self.dataframe = pd.DataFrame(list(qs), columns=columns.keys())
+        if self.has_encrypted_fields:
+            qs = qs.filter(**query_filter)
+            self.dataframe = pd.DataFrame(
+                [[getattr(obj, key) for key in columns]
+                 for obj in qs], columns=columns)
+        else:
+            qs = qs.values_list(*columns.keys()).filter(**query_filter)
+            self.dataframe = pd.DataFrame(list(qs), columns=columns.keys())
         self.dataframe.rename(columns=columns, inplace=True)
         self.dataframe.fillna(value=np.nan, inplace=True)
         for column in list(self.dataframe.select_dtypes(include=['datetime64[ns, UTC]']).columns):
-            self.dataframe[column] = self.dataframe[column].astype('datetime64[ns]')
+            self.dataframe[column] = self.dataframe[
+                column].astype('datetime64[ns]')
+
+    @property
+    def has_encrypted_fields(self):
+        for field in self.model._meta.fields:
+            if hasattr(field, 'field_cryptor'):
+                return True
+        return False
 
     def columns(self, qs, add_columns_for):
         """ """

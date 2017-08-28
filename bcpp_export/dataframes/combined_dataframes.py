@@ -46,18 +46,21 @@ class CombinedDataFrames(CsvExportMixin):
         if not subjects_object.empty:
             self.subjects = subjects_object
         else:
-            self.obj_subjects = self.get_subjects(merge_subjects_on, add_identity256)
+            self.obj_subjects = self.get_subjects(
+                merge_subjects_on, add_identity256)
             self.subjects = self.obj_subjects.results
             self.subjects.to_csv('~/subjects_tmp.csv', index=False)
         if not members_object.empty:
             self.members = members_object
         else:
-            self.obj_members = Members(self.survey_name, subjects=self.subjects)
+            self.obj_members = Members(
+                self.survey_name, subjects=self.subjects)
             self.members = self.obj_members.results
         if not residences_object.empty:
             self.residences = residences_object
         else:
-            self.obj_residences = Residences(self.survey_name, subjects=self.subjects, members=self.members)
+            self.obj_residences = Residences(
+                self.survey_name, subjects=self.subjects, members=self.members)
             self.plots = self.obj_residences.plots
             self.households = self.obj_residences.households
             self.residences = self.obj_residences.residences
@@ -74,8 +77,10 @@ class CombinedDataFrames(CsvExportMixin):
         return Subjects(self.survey_name, merge_subjects_on, add_identity256)
 
     def validate(self):
-        assert len(self.plots.query('enrolled == 1')) == len(pd.unique(self.subjects.plot_identifier.ravel()))
-        assert len(self.residences.query('enrolled == 1')) == len(pd.unique(self.subjects.household_identifier.ravel()))
+        assert len(self.plots.query('enrolled == 1')) == len(
+            pd.unique(self.subjects.plot_identifier.ravel()))
+        assert len(self.residences.query('enrolled == 1')) == len(
+            pd.unique(self.subjects.household_identifier.ravel()))
 
     def summary(self, **kwargs):
         plots = self.filtered_export_dataframe(self.plots, **kwargs)
@@ -103,7 +108,8 @@ class CDCDataFrames(CombinedDataFrames):
 
     export_dataset_names = ['plots', 'households', 'members', 'subjects']
 
-    plots_columns = ['community', 'confirmed', 'enrolled', 'plot_identifier', 'plot_status']
+    plots_columns = [
+        'community', 'confirmed', 'enrolled', 'plot_identifier', 'plot_status']
 
     households_columns = [
         'community', 'enrolled', 'enumerated', 'household_identifier', 'plot_identifier', 'survey']
@@ -125,9 +131,11 @@ class CDCDataFrames(CombinedDataFrames):
         if add_identity256:
             self.add_identity256()
         else:
-            sys.stdout.write(style.WARNING('WARNING! Not adding column \'identity256\'.\n'))
+            sys.stdout.write(
+                style.WARNING('WARNING! Not adding column \'identity256\'.\n'))
         if kwargs.get('export_now'):
-            sys.stdout.write(style.NOTICE('Exporting {} to CSV.\n'.format(self.export_dataset_names)))
+            sys.stdout.write(
+                style.NOTICE('Exporting {} to CSV.\n'.format(self.export_dataset_names)))
             self.to_csv()
             sys.stdout.write(style.SQL_FIELD('Done.\n'))
 

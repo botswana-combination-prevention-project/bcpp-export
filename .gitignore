@@ -1,3 +1,6 @@
+old_crypto_fields/
+old_etc/
+etc/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

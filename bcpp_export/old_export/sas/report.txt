@@ -1,0 +1,67 @@
+BCPP 24 August 2015
+
+Random selection of households
+20% of households, not positive individuals
+
+
+
+Treat <= 350
+Treat early > 350, VL >= 10000
+
+Treat 350-500
+VL above 500
+
+
+
+pairs 1-7 only in intervetion communities
+20% + 80% of households
+
+plots 12856
+reside 10141
+enum 8445
+persons enum 32537
+persons enum 19043 16-64
+interviewed 17282 (home 12183, mobile 5099) got percentages wrong since BHS does not do mobile testing, said 30% mobile, 70% HH
+
+previous test in last 12 months 5077 (know there status)
+not tested 12,207
+
+2333 (-) (124 declined) where 1947 (-), 39 (+)
+2745 (+) -> 2317 (ART)
+
+newly identified 983 (+)
+
+12207 not tested in last 12 months
+954 (+)
+10207 (-) ??
+
+next
+
+1376 (973 new pos, balance known)
+504 < 350 -> 424 linked
+302 350-500 -> 239 linked 
+402 > 500 -> 380 linked
+180 CD4 unknown -> 31 linked
+
+it is irresponsible to present bad data
+
+411/575 (71% viral load results) of which 213/411 > 10,000 of which 177/213 initiated
+
+90-90-90
+73% (extrapolate for missing and absent)
+75%
+
+
+PIMS
+635 defaulters
+44201 eligible ??
+353 lost
+81238 on therapy
+
+what is spectrum
+
+
+
+
+
+
